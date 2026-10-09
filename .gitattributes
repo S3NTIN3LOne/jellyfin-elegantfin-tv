@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.woff2 binary
+# Vendor CSS is checksum-verified; preserve its original bytes on every platform.
+vendor/*.css -text
+vendor/** -whitespace

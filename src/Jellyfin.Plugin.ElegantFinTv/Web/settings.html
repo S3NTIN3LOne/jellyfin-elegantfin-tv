@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head><title>ElegantFin TV</title></head>
+<body>
+<div id="ElegantFinTvSettingsPage" data-role="page" class="page type-interior pluginConfigurationPage">
+    <div data-role="content"><div class="content-primary">
+        <form id="ElegantFinTvSettingsForm">
+            <h2>ElegantFin TV</h2>
+            <p>Die Einstellungen werden beim nächsten vollständigen Laden der App wirksam.</p>
+            <div class="checkboxContainer checkboxContainer-withDescription">
+                <label><input is="emby-checkbox" type="checkbox" id="eftvEnabled"><span>Theme aktivieren</span></label>
+            </div>
+            <div class="selectContainer">
+                <label class="selectLabel" for="eftvPerformance">Darstellung</label>
+                <select is="emby-select" id="eftvPerformance">
+                    <option value="balanced">TV: weniger Effekte, gleiche Farben und Formen</option>
+                    <option value="full">Volle Theme-Effekte zum Vergleich</option>
+                </select>
+            </div>
+            <div class="checkboxContainer checkboxContainer-withDescription">
+                <label><input is="emby-checkbox" type="checkbox" id="eftvMediaBar"><span>Media-Bar-Fokusbedienung ergänzen</span></label>
+                <div class="fieldDescription">Die vorhandene Media Bar muss separat installiert sein. Inhalte und Wiedergabe bleiben in deren Verantwortung.</div>
+            </div>
+            <div class="checkboxContainer checkboxContainer-withDescription">
+                <label><input is="emby-checkbox" type="checkbox" id="eftvAll"><span>Auch auf Desktop und Mobilgeräten aktivieren</span></label>
+                <div class="fieldDescription">Standardmäßig nur webOS und TV-Layout. Bei Aktivierung bestehende ElegantFin-CSS-Einbindungen entfernen, um doppelte Themes zu vermeiden.</div>
+            </div>
+            <p id="eftvSettingsStatus" role="status"></p>
+            <button is="emby-button" type="submit" class="raised button-submit block"><span>Speichern</span></button>
+        </form>
+    </div></div>
+    <script>
+    (function () {
+        var id = 'f723a150-5b12-4ed8-8a31-450b54b2eac9';
+        var page = document.getElementById('ElegantFinTvSettingsPage');
+        function field(name) { return page.querySelector('#' + name); }
+        function error() { field('eftvSettingsStatus').textContent = 'Einstellungen konnten nicht geladen oder gespeichert werden.'; }
+        page.addEventListener('viewshow', function () {
+            ApiClient.getPluginConfiguration(id).then(function (config) {
+                field('eftvEnabled').checked = config.Enabled;
+                field('eftvMediaBar').checked = config.MediaBar;
+                field('eftvAll').checked = config.ApplyToAllClients;
+                field('eftvPerformance').value = config.Performance === 'full' ? 'full' : 'balanced';
+            }).catch(error);
+        });
+        page.querySelector('form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            ApiClient.getPluginConfiguration(id).then(function (config) {
+                config.Enabled = field('eftvEnabled').checked;
+                config.MediaBar = field('eftvMediaBar').checked;
+                config.ApplyToAllClients = field('eftvAll').checked;
+                config.Performance = field('eftvPerformance').value;
+                return ApiClient.updatePluginConfiguration(id, config);
+            }).then(function () {
+                field('eftvSettingsStatus').textContent = 'Gespeichert. Jellyfin-App vollständig neu laden.';
+            }).catch(error);
+        });
+    }());
+    </script>
+</div>
+</body>
+</html>

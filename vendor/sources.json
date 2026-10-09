@@ -1,0 +1,5 @@
+[
+  { "file": "ElegantFin-jellyfin-theme-build-latest-minified.css", "sha256": "e84df61bae2d3399bc01fbdfd4a9ade0d46b31a005e6ff67c2200c06b4748780" },
+  { "file": "ElegantFin-jf12-modern-latest.css", "sha256": "05f4941626130cddaba7085b79d5811bba9ad0da960f6a0352801dcb474783e3" },
+  { "file": "media-bar-plugin-support-latest-min.css", "sha256": "fd4558e76e4b9d44f07089a24cc35f0f704bacd47e09f3e86169d6bea86d4e20" }
+]

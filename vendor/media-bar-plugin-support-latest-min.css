@@ -1,0 +1,190 @@
+/*! Add-on: Media Bar Plugin Support v26.09.05 for the ElegantFin Theme for Jellyfin by lscambo13 */
+/* Device scope: desktop/mobile layouts only; layout-tv keeps the default styles.
+ * :where() preserves the original selector specificity. */
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).detail-button:before, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).favorite-button.favorited:before, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).favorite-button:before, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).play-button:before {
+    font-weight: 400
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).play-button {
+    font-family: Inter;
+    font-size: 1em;
+    font-weight: 500;
+    order: 1
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).detail-button, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).favorite-button {
+    order: 2
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).backdrop-container, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).backdrop-overlay, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).backdrop:not(.tmla-mask) {
+    background-color: transparent;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, .85), 70%, transparent);
+    -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, .85), 70%, transparent)
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).backdrop:not(.tmla-mask) {
+    transform-origin: center left
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).rating-value {
+    flex-wrap: wrap;
+    justify-content: center
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).age-rating {
+    color: unset;
+    font-family: Archivo Narrow, sans-serif;
+    font-size: .8em
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *)#slides-container {
+    height: 62%;
+    left: var(--sidePadding);
+    overflow: visible;
+    position: absolute;
+    top: calc(var(--appBarHeight) * 2 + 1.25em);
+    user-select: none;
+    width: calc(100vw - var(--sidePadding) * 2)
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).slide {
+    border: var(--defaultBorder);
+    border-radius: var(--largerRadius);
+    overflow: hidden;
+    transition: border 0s
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).logo-container {
+    top: 10vh
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).backdrop-container, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).backdrop-overlay, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).backdrop:not(.tmla-mask) {
+    mask-image: none;
+    -webkit-mask-image: none
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).backdrop-overlay {
+    background: linear-gradient(0deg, rgba(0, 0, 0, .85), 40%, transparent)
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).pause-button, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).volume-toggle {
+    top: 1em !important
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).separator-icon {
+    color: var(--dimTextColor);
+    font-size: 5px
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).dot {
+    background-color: var(--textColor) !important;
+    border-radius: .25em;
+    height: .375em;
+    opacity: .5;
+    transition: width .5s;
+    width: .375em
+}
+
+:where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).dot.active {
+    transform: none;
+    width: 2em
+}
+
+@media only screen and (orientation: landscape) {
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).button-container, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).dots-container, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).genre, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).info-container, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).plot-container {
+        top: unset
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).button-container {
+        bottom: 3em
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).dots-container {
+        bottom: 4.5em
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).plot-container {
+        bottom: 7em;
+        height: 4em
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).genre {
+        bottom: 12em
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).info-container {
+        bottom: 14em
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).logo-container {
+        align-items: flex-end;
+        max-width: 35vw;
+        top: 3%
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).gradient-overlay {
+        background: linear-gradient(37deg, rgba(0, 0, 0, .2) 32%, rgb(29 29 29/7%) 47%, rgba(29, 29, 29, 0));
+        mask: none;
+        -webkit-mask: none
+    }
+}
+
+@media only screen and (max-width: 767px) and (orientation: portrait) {
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).button-container {
+        bottom: 3em
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).genre, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).tomato-rating {
+        display: none
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).dots-container {
+        bottom: 6em
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).info-container {
+        bottom: 5em
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).logo-container {
+        top: calc(100% - 15em)
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).backdrop:not(.tmla-mask) {
+        transform-origin: center
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).left-arrow, :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).right-arrow {
+        display: none !important
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).play-button {
+        order: 2
+    }
+}
+
+@media (min-width: 75em) {
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *)#slides-container {
+        top: calc(var(--appBarHeight) + 1.25em)
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).layout-tv #slides-container {
+        top: calc(var(--appBarHeight) * 2 + 1.25em)
+    }
+}
+
+@media (min-width: 100em) {
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).layout-tv #slides-container {
+        top: calc(var(--appBarHeight) + 1.25em)
+    }
+}
+
+@media only screen and (max-height: 767px) and (orientation: landscape) {
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *)#slides-container {
+        height: 57%
+    }
+
+    :where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *).logo-container {
+        top: 3%
+    }
+}

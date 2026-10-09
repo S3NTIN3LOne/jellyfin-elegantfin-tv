@@ -1,0 +1,72 @@
+/* TV adaptations. Jellyfin keeps ownership of the layout mode and navigation. */
+:root[data-eftv] {
+    --eftv-focus: #a5b4fc;
+    --eftv-focus-width: 3px;
+}
+
+/* Replace moving-background blur with the theme's existing gradients and colours. */
+:root[data-eftv][data-eftv-performance="balanced"] {
+    --blurSmallest: none !important;
+    --blurDefault: none !important;
+    --blurLarge: none !important;
+    --blurLargest: none !important;
+    --appBarBlurStrength: none !important;
+    --ef12-surfaceBlur: none !important;
+    --cardHoverEffect: none !important;
+    --ef12-ratingsGridOpen: 0s;
+    --ef12-itemBarEnter: 0s;
+    --iconPack: "Material Symbols Rounded Minimal";
+}
+
+:root[data-eftv][data-eftv-performance="balanced"] :is(.cardScalable, .cardImageContainer, .cardOverlayContainer, .backdropImageFadeIn, .itemBackdrop, .backgroundContainer),
+:root[data-eftv][data-eftv-performance="balanced"] #slides-container :is(.backdrop, .backdrop-container, .backdrop-overlay, .gradient-overlay, .dot) {
+    animation: none !important;
+    transition: none !important;
+}
+
+:root[data-eftv][data-eftv-performance="balanced"] .cardScalable::before,
+:root[data-eftv][data-eftv-performance="balanced"] .cardScalable::after {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Keep slide opacity transitions: some Media Bar versions rely on transitionend. */
+:root[data-eftv] #slides-container .slide {
+    transition: opacity 120ms linear;
+}
+
+/* Focus must not depend on hover, and must survive the inherited theme's resets. */
+:root[data-eftv] :is(a, button, input, select, textarea, [tabindex]):focus-visible,
+:root[data-eftv] .show-focus:focus,
+:root[data-eftv] #slides-container [data-eftv-control]:focus {
+    outline: var(--eftv-focus-width) solid var(--eftv-focus) !important;
+    outline-offset: 3px !important;
+}
+
+:root[data-eftv] .card:focus .cardScalable,
+:root[data-eftv] .card:focus-within .cardScalable {
+    outline: var(--eftv-focus-width) solid var(--eftv-focus) !important;
+    outline-offset: -3px !important;
+}
+
+:root[data-eftv] .card:focus-within .cardOverlayContainer {
+    opacity: 1;
+}
+
+:root[data-eftv] #slides-container :is(.play-button, .detail-button, .favorite-button, .pause-button, .volume-toggle, .left-arrow, .right-arrow) {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+}
+
+/* Hidden slides must not capture remote focus. Activated only after adapter setup. */
+:root[data-eftv] #slides-container[data-eftv-adapted] .slide[inert] {
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root[data-eftv] :is(.cardScalable, .cardImageContainer, .backdropImageFadeIn),
+    :root[data-eftv] #slides-container :is(.backdrop, .dot) {
+        animation: none !important;
+        transition: none !important;
+    }
+}

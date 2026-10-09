@@ -1,0 +1,209 @@
+import { test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile, access } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { createServer } from 'node:http';
+import { chromium } from 'playwright';
+import postcss from 'postcss';
+import { transformTheme } from '../tools/build.mjs';
+
+const root = new URL('../', import.meta.url);
+const js = await readFile(new URL('src/tv.js', root), 'utf8');
+const css = await readFile(new URL('src/Jellyfin.Plugin.ElegantFinTv/Web/tv.css', root), 'utf8');
+let browser, server, base;
+let requests = [];
+const fixture = `<!doctype html><html class="layout-tv"><head><meta charset="utf-8">
+<style>
+body { margin:0; padding:30px; background:#111827; }
+#slides-container { position:relative!important; top:0!important; left:0!important; width:900px!important; height:350px!important; }
+.slide { position:absolute; inset:0; }
+.slide:not(.active) { opacity:0; }
+.button-container { position:absolute; bottom:30px!important; display:flex; gap:25px; }
+.play-button,.detail-button { display:inline-block; width:120px; height:55px; }
+</style></head><body>
+<div id="slides-container"><div class="slide active" id="one"><div class="button-container"><button class="play-button">Play</button><div class="detail-button">Details</div></div></div>
+<div class="slide" id="two"><div class="button-container"><button class="play-button">Play 2</button><div class="detail-button">Details 2</div></div></div></div>
+<button id="outside">Outside</button><footer class="appfooter">Footer <span class="material-icons">play_arrow</span></footer>
+<script src="../ElegantFinTv/bootstrap.js"></script></body></html>`;
+
+before(async () => {
+    server = createServer(async (req, res) => {
+        requests.push(req.url);
+        if (/\/fonts\/font-\d+\.woff2$/.test(req.url)) {
+            res.setHeader('content-type', 'font/woff2');
+            res.end(await readFile(new URL('vendor/fonts/' + req.url.split('/').pop(), root)));
+        } else if (req.url.includes('bootstrap.js')) {
+            res.setHeader('content-type', 'text/javascript');
+            res.end('window.ElegantFinTvConfig={enabled:true,mediaBar:true,performance:"balanced"};\n' + js);
+        } else if (req.url.includes('tv.css')) {
+            res.setHeader('content-type', 'text/css');
+            res.end(css);
+        } else { res.setHeader('content-type', 'text/html'); res.end(fixture); }
+    });
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    base = `http://127.0.0.1:${server.address().port}`;
+    const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
+    let executablePath = process.env.EFTV_BROWSER;
+    if (!executablePath) { try { await access(edge); executablePath = edge; } catch {} }
+    browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
+});
+after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
+
+async function open(options = {}) {
+    const context = await browser.newContext(options);
+    const page = await context.newPage();
+    page.setDefaultTimeout(5000);
+    page.on('pageerror', error => console.error('Browser error:', error.message));
+    page.on('console', message => { if (message.type() === 'warning') console.error(message.text()); });
+    await page.route(/https:\/\/(fonts.googleapis.com|fonts.gstatic.com)/, route => route.abort());
+    await page.goto(base + '/jellyfin/web/index.html');
+    await page.waitForFunction(() => window.ElegantFinTv?.status().active);
+    return { page, context };
+}
+
+test('originals and independent vendor copies retain their SHA256 hashes', async () => {
+    const sources = JSON.parse(await readFile(new URL('vendor/sources.json', root), 'utf8'));
+    for (const source of sources) {
+        for (const location of [`vendor/${source.file}`, `../${source.file}`]) {
+            // Original workspace files are optional when this independent project is copied elsewhere.
+            if (location.startsWith('../')) {
+                try { await access(new URL(location, root)); } catch { continue; }
+            }
+            const bytes = await readFile(new URL(location, root));
+            assert.equal(createHash('sha256').update(bytes).digest('hex'), source.sha256, location);
+        }
+    }
+});
+
+test('selector transform handles root, body, desktop and keyframes without losing TV scope', () => {
+    const guard = ':where(:root:is(.layout-desktop, .layout-mobile):not(.layout-tv), :root:is(.layout-desktop, .layout-mobile):not(.layout-tv) *)';
+    const output = transformTheme(`${guard}:root.layout-desktop { color:red; animation:spin 1s; } body${guard} .x {color:blue} @keyframes spin {to {opacity:0}}`).toString();
+    assert.match(output, /:is\(\.layout-desktop,\.layout-tv\)/);
+    assert.match(output, /body:where\(:root\[data-eftv\]/);
+    assert.match(output, /animation:eftv-spin/);
+    assert.match(output, /@keyframes eftv-spin/);
+    assert.throws(() => transformTheme('.unscoped { color:red }'));
+    postcss.parse(css).walkRules(rule => {
+        if (rule.parent.type === 'atrule' && /keyframes/.test(rule.parent.name)) return;
+        assert.ok(rule.selector.includes('[data-eftv]'), rule.selector);
+    });
+});
+
+test('TV activation preserves Jellyfin layout and reverse-proxy base URL; blur is removed', async () => {
+    requests = [];
+    const {page, context} = await open();
+    assert.equal(await page.locator('html').getAttribute('class'), 'layout-tv');
+    assert.equal(await page.locator('.appfooter').evaluate(el => getComputedStyle(el).backdropFilter), 'none');
+    assert.equal(await page.locator('html').evaluate(el => getComputedStyle(el).getPropertyValue('--accentColor').trim()), '#5d55e7');
+    assert.ok(requests.some(path => path.startsWith('/jellyfin/ElegantFinTv/tv.css?')));
+    assert.equal(await page.locator('link[rel=stylesheet]').count(), 1);
+    await page.evaluate(() => document.fonts.ready);
+    assert.equal(await page.evaluate(() => document.fonts.check('425 16px Inter')), true);
+    assert.equal(css.includes('fonts.googleapis.com'), false);
+    assert.equal(css.includes('fonts.gstatic.com'), false);
+    assert.match(await page.locator('.material-icons').evaluate(el => getComputedStyle(el).fontFamily), /Rounded Minimal/);
+    const fonts = JSON.parse(await readFile(new URL('vendor/fonts/sources.json', root), 'utf8'));
+    const fullIcons = fonts.fonts.find(font => font.url.includes('/materialsymbolsrounded/'));
+    assert.ok(fullIcons);
+    assert.equal(requests.some(path => path.endsWith('/fonts/' + fullIcons.file)), false);
+    await context.close();
+});
+
+test('inactive slides cannot capture focus; D-pad and Enter work without native double clicks', async () => {
+    const {page, context} = await open();
+    await page.waitForSelector('#slides-container[data-eftv-adapted]');
+    assert.equal(await page.locator('#two').getAttribute('inert'), '');
+    await page.evaluate(() => {
+        window.clicks = 0;
+        document.getElementById('slides-container').addEventListener('click', () => window.clicks++);
+    });
+    await page.locator('#one .play-button').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.evaluate(() => window.clicks), 1);
+    await page.keyboard.press('ArrowRight');
+    assert.equal(await page.evaluate(() => document.activeElement.className), 'detail-button');
+    await page.keyboard.press('Enter');
+    assert.equal(await page.evaluate(() => window.clicks), 2);
+    await page.evaluate(() => {
+        document.getElementById('one').classList.remove('active');
+        document.getElementById('two').classList.add('active');
+    });
+    await page.waitForFunction(() => document.activeElement.closest('.slide')?.id === 'two');
+    assert.equal(await page.locator('#one').getAttribute('inert'), '');
+    await context.close();
+});
+
+test('edge navigation and Back remain available to Jellyfin', async () => {
+    const {page, context} = await open();
+    await page.evaluate(() => {
+        window.keys = [];
+        document.addEventListener('keydown', event => window.keys.push(event.key));
+    });
+    await page.locator('#one .detail-button').focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Escape');
+    assert.deepEqual(await page.evaluate(() => window.keys), ['ArrowDown', 'Escape']);
+    await context.close();
+});
+
+test('late/replaced Media Bar is adapted; dispose restores owned attributes', async () => {
+    const {page, context} = await open();
+    await page.evaluate(() => {
+        document.getElementById('slides-container').remove();
+        const node = document.createElement('div');
+        node.id = 'slides-container';
+        node.innerHTML = '<div class="slide active"><div class="detail-button">Details</div></div><div class="slide"></div>';
+        document.body.appendChild(node);
+    });
+    await page.waitForSelector('#slides-container[data-eftv-adapted]');
+    assert.equal(await page.locator('.detail-button').getAttribute('tabindex'), '0');
+    await page.evaluate(() => window.ElegantFinTv.dispose());
+    assert.equal(await page.locator('html').getAttribute('data-eftv'), null);
+    assert.equal(await page.locator('.detail-button').getAttribute('tabindex'), null);
+    assert.equal(await page.locator('.slide[inert]').count(), 0);
+    assert.equal(await page.locator('link[rel=stylesheet]').count(), 0);
+    await context.close();
+});
+
+test('desktop stays unchanged; runtime layout switch activates then restores theme', async () => {
+    const {page, context} = await open();
+    await page.evaluate(() => document.documentElement.className = 'layout-desktop');
+    await page.waitForFunction(() => !window.ElegantFinTv.status().active);
+    assert.equal(await page.locator('#slides-container').getAttribute('data-eftv-adapted'), null);
+    await page.evaluate(() => document.documentElement.className = 'layout-tv');
+    await page.waitForFunction(() => window.ElegantFinTv.status().active);
+    assert.equal(await page.locator('link[rel=stylesheet]').count(), 1);
+    await context.close();
+});
+
+test('webOS is detected even when Jellyfin uses desktop layout', async () => {
+    const {page, context} = await open({ userAgent: 'Mozilla/5.0 (Web0S; Linux/SmartTV) Chrome/108.0.5359.211' });
+    await page.evaluate(() => document.documentElement.className = 'layout-desktop');
+    await page.waitForTimeout(30);
+    assert.equal(await page.evaluate(() => window.ElegantFinTv.status().active), true);
+    await context.close();
+});
+
+test('initial desktop load downloads no TV stylesheet or fonts', async () => {
+    const page = await browser.newPage();
+    await page.route('**/web/index.html', route => route.fulfill({ contentType: 'text/html', body: fixture.replace('class="layout-tv"', 'class="layout-desktop"') }));
+    await page.goto(base + '/web/index.html');
+    assert.equal(await page.evaluate(() => window.ElegantFinTv.status().active), false);
+    assert.equal(await page.locator('link[rel=stylesheet]').count(), 0);
+    await page.close();
+});
+
+test('unknown Media Bar slide conventions are left focusable', async () => {
+    const {page, context} = await open();
+    await page.evaluate(() => {
+        const old = document.getElementById('slides-container');
+        old.remove();
+        const replacement = document.createElement('div');
+        replacement.id = 'slides-container';
+        replacement.innerHTML = '<div class="slide current"><button class="play-button">Play</button></div><div class="slide"></div>';
+        document.body.appendChild(replacement);
+    });
+    await page.waitForSelector('#slides-container[data-eftv-adapted]');
+    assert.equal(await page.locator('.slide[inert]').count(), 0);
+    await context.close();
+});
