@@ -4,6 +4,12 @@ Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Üb
 
 **Status: lokal gebaut und automatisiert geprüft; noch nicht am LG C4 oder mit der privat angepassten Media Bar getestet.** Ein Geschwindigkeitsgewinn ist nicht gemessen. Poster-Anfragen werden nicht verändert; dieses Paket behebt keinen nachgewiesenen Server- oder Netzwerkengpass.
 
+## Update 0.1.1.0
+
+Behebt eine übersprungene Theme-Einbindung bei gleichzeitig installierter Media Bar. Version 0.1.0.0 registrierte eine eigene Regex-Verarbeitungskette; File Transformation bevorzugt jedoch die von Media Bar unter `index.html` registrierte Kette. Beide Plugins verwenden jetzt denselben Schlüssel. Der Konflikt wurde mit der unveränderten Upstream-Verarbeitungsklasse reproduziert und die Korrektur mit beiden Registrierungsreihenfolgen geprüft.
+
+Im Jellyfin-Katalog nach Updates suchen, ElegantFin TV auf **0.1.1.0** aktualisieren und den Server neu starten. Danach die LG-App vollständig beenden und erneut starten, nicht nur zum TV-Startbildschirm wechseln. Der Repository-Link bleibt gleich.
+
 ## Enthalten
 
 - Jellyfin-Serverplugin für **12.2.0 / .NET 10** mit eigener Einstellungsseite.
@@ -27,11 +33,11 @@ Für die Installation über Jellyfins Plugin-Katalog ist `manifest.json` vorbere
 https://raw.githubusercontent.com/S3NTIN3LOne/jellyfin-elegantfin-tv/main/manifest.json
 ```
 
-**Solange das GitHub-Repository privat ist, funktioniert dieser Link in Jellyfin nicht.** Manifest und Release-Download müssen öffentlich erreichbar sein. Das Katalogpaket endet auf `-catalog.zip`; das nachfolgend beschriebene Paket ohne diesen Zusatz ist für die manuelle Installation gedacht. Die Voraussetzung File Transformation gilt bei beiden Installationswegen.
+Das Repository und die Release-Downloads sind öffentlich erreichbar. Das Katalogpaket endet auf `-catalog.zip`; das nachfolgend beschriebene Paket ohne diesen Zusatz ist für die manuelle Installation gedacht. Die Voraussetzung File Transformation gilt bei beiden Installationswegen.
 
 1. Im Jellyfin-Dashboard die Serverversion **12.2.0** prüfen. Das Paket ist gegen diese API gebaut; andere Versionen sind nicht freigegeben.
 2. Eine zu Jellyfin 12.2 passende Version von [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) muss installiert sein. Bei einer Media-Bar-Installation kann sie bereits vorhanden sein. Das Plugin enthält diese Abhängigkeit nicht.
-3. Das Paket `artifacts/ElegantFinTV-0.1.0-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.0.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
+3. Das Paket `artifacts/ElegantFinTV-0.1.1-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.1.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
 4. Server starten. Im Dashboard unter Plugins **ElegantFin TV** öffnen. Standard: aktiviert, TV-Profil, Media-Bar-Adapter an, „Auch auf Desktop und Mobilgeräten“ aus.
 5. Die drei bisherigen CSS-Einbindungen können für den ersten TV-Test bestehen bleiben: Sie schließen `layout-tv` bereits aus. Die Dateien selbst müssen nicht bearbeitet werden. In der LG-App TV-Layout verwenden und die App vollständig schließen/neu starten, damit `index.html` neu angefordert wird.
 6. Das vorhandene Media-Bar-Plugin installiert lassen. ElegantFin TV lädt **keine zweite Media Bar** und ersetzt nicht deren Wiedergabe-, Favoriten-, Playlist- oder Trailerlogik.
@@ -80,6 +86,7 @@ npm run build
 npm test
 dotnet build ElegantFinTv.sln -c Release
 dotnet run --project tests/ServerChecks -c Release
+powershell -ExecutionPolicy Bypass -File tools/test-file-transformation.ps1
 powershell -ExecutionPolicy Bypass -File tools/package.ps1
 ```
 

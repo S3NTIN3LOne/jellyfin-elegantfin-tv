@@ -13,6 +13,10 @@ public sealed class TransformationPayload
 
 public static class Transformation
 {
+    // File Transformation selects ONE matching pipeline. Join Media Bar's exact key;
+    // a different regex key is skipped when index.html has an exact registration.
+    public const string FileNamePattern = "index.html";
+
     public static string IndexHtml(TransformationPayload payload) => Inject(payload.Contents ?? string.Empty,
         Plugin.Instance?.Configuration.Enabled == true);
 
@@ -56,7 +60,7 @@ public sealed class RegisterTransformationTask(ILogger<RegisterTransformationTas
         var payload = new JObject
         {
             ["id"] = "c78f284c-44c9-4aa8-a65d-780d4231752a",
-            ["fileNamePattern"] = @"(^|[/\\])index\.html$",
+            ["fileNamePattern"] = Transformation.FileNamePattern,
             ["callbackAssembly"] = typeof(Transformation).Assembly.FullName,
             ["callbackClass"] = typeof(Transformation).FullName,
             ["callbackMethod"] = nameof(Transformation.IndexHtml)

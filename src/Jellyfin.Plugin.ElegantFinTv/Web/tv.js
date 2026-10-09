@@ -182,7 +182,7 @@
         if (!link) {
             link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = new URL('tv.css?v=' + encodeURIComponent(config.version || '0.1.0'), assetBase).href;
+            link.href = new URL('tv.css?v=' + encodeURIComponent(config.version || '0.1.1'), assetBase).href;
             link.onload = function () { loaded = true; reconcile(); };
             link.onerror = function () { console.warn('ElegantFin TV: stylesheet could not be loaded.'); };
             document.head.appendChild(link);
@@ -237,7 +237,7 @@
     }
 
     window.ElegantFinTv = {
-        version: config.version || '0.1.0',
+        version: config.version || '0.1.1',
         diagnose: diagnose,
         status: function () { return { active: active, tv: isTv(), mediaBarFound: !!bar, profile: root.getAttribute('data-eftv-performance') }; },
         dispose: function () {

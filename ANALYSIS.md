@@ -1,5 +1,13 @@
 # Analyse und Grenzen
 
+## Korrektur 0.1.1.0: Media-Bar-Konflikt
+
+Die erste Version registrierte `(^|[/\\])index\.html$`, die Media Bar hingegen `index.html`. File Transformation führt pro Pfad nur eine passende Verarbeitungskette aus und bevorzugt einen exakten Schlüssel. Deshalb wurde bei gleichzeitig registrierter Media Bar unser Einfügen des Bootstrap-Skripts übersprungen. Dieser Integrationsfehler war von den ersten Einzeltests nicht abgedeckt.
+
+Die Registrierung verwendet jetzt ebenfalls `index.html`. Der neue Integrationstest lädt die unveränderte Upstream-Klasse `WebFileTransformationService` aus Commit `2dd4279bc7aedd082de0639278f9142ead229a52`. Mit `index.html` und `/index.html` reproduziert er den Ausfall der alten Registrierung; mit der korrigierten Registrierung laufen beide Callbacks für diese Pfade sowie `web/index.html`, jeweils in beiden Registrierungsreihenfolgen. Die privaten Media-Bar-Callbacks werden dabei durch eine einfache Skripteinfügung vertreten. Die Verarbeitungskette ist echter Upstream-Code, kein nachgebauter Resolver.
+
+Dieser reproduzierte Fehler passt zur gemeldeten unveränderten TV-Oberfläche. Ohne Serverprotokoll bleibt offen, ob zusätzlich Cache-, Installations- oder andere Integrationsprobleme auf dem konkreten Server vorliegen.
+
 ## Ausgangslage
 
 LG C4, offizielle Jellyfin-webOS-App, Jellyfin 12.2, drei Custom-CSS-Dateien und privat angepasste Media Bar auf Basis 3.0. PC-Browser laut Nutzer schnell; auf TV Scrollen und Posteranzeige langsam. Kein Zugriff auf TV, Server oder private Media-Bar-Quellen.

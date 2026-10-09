@@ -17,10 +17,10 @@ Check(Transformation.Inject(output, true) == output, "injection is idempotent");
 Check(Transformation.Inject(original, false) == original, "disabled leaves HTML unchanged");
 Check(Transformation.Inject("no head", true) == "no head", "unexpected HTML fails without rewriting");
 Check(Transformation.Inject("<head></head >", true).Contains("eftv-bootstrap"), "HTML closing tag whitespace supported");
-var pattern = @"(^|[/\\])index\.html$";
+var pattern = Transformation.FileNamePattern;
+Check(pattern == "index.html", "registration shares Media Bar's exact File Transformation pipeline");
 foreach (var path in new[] { "index.html", "/web/index.html", @"C:\web\index.html" })
     Check(Regex.IsMatch(path, pattern), "transformation path: " + path);
-Check(!Regex.IsMatch("notindex.html", pattern), "unrelated HTML excluded");
 
 var controller = new AssetsController { ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() } };
 Check(controller.Css().Content?.Contains("[data-eftv]") == true, "generated CSS embedded in plugin");

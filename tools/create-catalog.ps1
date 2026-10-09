@@ -2,13 +2,13 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$inputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.0-jf12.2.zip'
-$outputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.0-jf12.2-catalog.zip'
+$inputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.1-jf12.2.zip'
+$outputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.1-jf12.2-catalog.zip'
 $inputZip = [IO.Compression.ZipFile]::OpenRead($inputPath)
 $outputStream = [IO.File]::Open($outputPath, [IO.FileMode]::Create)
 $outputZip = [IO.Compression.ZipArchive]::new($outputStream, [IO.Compression.ZipArchiveMode]::Create)
 try {
-    $prefix = 'ElegantFinTV_0.1.0.0/'
+    $prefix = 'ElegantFinTV_0.1.1.0/'
     foreach ($entry in $inputZip.Entries) {
         if (!$entry.FullName.StartsWith($prefix)) { throw 'Unexpected manual-package structure' }
         $name = $entry.FullName.Substring($prefix.Length)
@@ -24,14 +24,14 @@ $manifest = @(@{
     guid = 'f723a150-5b12-4ed8-8a31-450b54b2eac9'
     name = 'ElegantFin TV'
     overview = 'ElegantFin for webOS and TV layouts'
-    description = 'TV theme with reduced effects and Media Bar focus support. Requires a compatible File Transformation plugin. Initial test release; LG C4 integration is not yet verified.'
+    description = 'TV theme with reduced effects and Media Bar focus support. Requires a compatible File Transformation plugin. LG C4 integration still requires on-device verification.'
     owner = 'S3NTIN3LOne'
     category = 'General'
     versions = @(@{
-        version = '0.1.0.0'
-        changelog = 'Initial test version for Jellyfin 12.2.0. TV-only by default; existing desktop CSS is unchanged.'
+        version = '0.1.1.0'
+        changelog = 'Fix frontend injection being skipped when Media Bar registers index.html. Both plugins now share the same File Transformation pipeline. Existing desktop CSS is unchanged.'
         targetAbi = '12.2.0.0'
-        sourceUrl = 'https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.0/ElegantFinTV-0.1.0-jf12.2-catalog.zip'
+        sourceUrl = 'https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.1/ElegantFinTV-0.1.1-jf12.2-catalog.zip'
         checksum = (Get-FileHash -LiteralPath $outputPath -Algorithm MD5).Hash.ToLowerInvariant()
         timestamp = [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
     })
