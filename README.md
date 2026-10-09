@@ -21,6 +21,14 @@ Die ursprünglichen drei Dateien im übergeordneten Ordner bleiben unverändert.
 
 ## Installation zum Gerätetest
 
+Für die Installation über Jellyfins Plugin-Katalog ist `manifest.json` vorbereitet:
+
+```text
+https://raw.githubusercontent.com/S3NTIN3LOne/jellyfin-elegantfin-tv/main/manifest.json
+```
+
+**Solange das GitHub-Repository privat ist, funktioniert dieser Link in Jellyfin nicht.** Manifest und Release-Download müssen öffentlich erreichbar sein. Das Katalogpaket endet auf `-catalog.zip`; das nachfolgend beschriebene Paket ohne diesen Zusatz ist für die manuelle Installation gedacht. Die Voraussetzung File Transformation gilt bei beiden Installationswegen.
+
 1. Im Jellyfin-Dashboard die Serverversion **12.2.0** prüfen. Das Paket ist gegen diese API gebaut; andere Versionen sind nicht freigegeben.
 2. Eine zu Jellyfin 12.2 passende Version von [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) muss installiert sein. Bei einer Media-Bar-Installation kann sie bereits vorhanden sein. Das Plugin enthält diese Abhängigkeit nicht.
 3. Das Paket `artifacts/ElegantFinTV-0.1.0-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.0.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
