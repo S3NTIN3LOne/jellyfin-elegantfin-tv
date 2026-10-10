@@ -251,10 +251,13 @@ test('diagnosis groups image timing without retaining URLs or tokens', async () 
         const image = new Image();
         image.src = '/Items/private-id/Images/Primary?api_key=private-token';
         document.body.appendChild(image);
+        const sized = new Image();
+        sized.src = '/Items/private-id/Images/Primary?fillWidth=300&fillHeight=450';
+        document.body.appendChild(sized);
         return await pending;
     });
     assert.equal(result.cancelled, false);
-    assert.equal(result.images.primary.count, 1);
+    assert.equal(result.images.primary.count, 2);
     assert.equal(result.images.primary.uncapped, 1);
     assert.ok(result.images.primary.encodedBytes > 0);
     assert.doesNotMatch(JSON.stringify(result), /private-id|private-token|api_key|127\.0\.0\.1/);
@@ -264,6 +267,45 @@ test('diagnosis groups image timing without retaining URLs or tokens', async () 
         window.cancelledReport = await pending;
     });
     assert.equal(await page.evaluate(() => window.cancelledReport.cancelled), true);
+    await context.close();
+});
+
+test('balanced cards suppress native focus zoom and shadows while preserving actions and full profile', async () => {
+    const {page, context} = await open();
+    await page.addStyleTag({ content: '.card.show-animation:focus .cardBox {transform:scale(1.1);transition:transform .2s;box-shadow:0 0 12px red} .cardOverlayContainer::after {content:"";transition:transform 1s}' });
+    await page.evaluate(() => {
+        const card = document.createElement('div');
+        card.id = 'motion-card'; card.className = 'card show-animation'; card.tabIndex = 0;
+        card.innerHTML = '<div class="cardBox"><div class="cardScalable"><a href="#film" class="cardImageContainer">Poster</a><div class="cardOverlayContainer"><button>Play</button></div></div></div>';
+        document.body.appendChild(card);
+    });
+    await page.locator('#motion-card').focus();
+    const read = () => page.locator('#motion-card .cardBox').evaluate(el => {
+        const s = getComputedStyle(el); return {transform:s.transform, shadow:s.boxShadow, duration:s.transitionDuration};
+    });
+    assert.deepEqual(await read(), {transform:'none', shadow:'none', duration:'0s'});
+    assert.equal(await page.locator('#motion-card .cardOverlayContainer').evaluate(el => getComputedStyle(el, '::after').content), 'none');
+    assert.equal(await page.locator('#motion-card .cardScalable').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
+    await page.locator('#motion-card button').focus();
+    assert.equal(await page.evaluate(() => document.activeElement.textContent), 'Play');
+    await page.evaluate(() => document.documentElement.setAttribute('data-eftv-performance', 'full'));
+    await page.locator('#motion-card').focus();
+    assert.notEqual((await read()).shadow, 'none');
+    assert.notEqual((await read()).duration, '0s');
+    await context.close();
+});
+
+test('balanced navigation header is opaque; playback header is not overridden', async () => {
+    const {page, context} = await open();
+    await page.addStyleTag({ content: '.skinHeader {background:rgba(10,20,30,.5)} .skinHeader::after {content:""}' });
+    await page.evaluate(() => {
+        for (const name of ['skinHeader','skinHeader osdHeader']) {
+            const el = document.createElement('header'); el.className=name; document.body.appendChild(el);
+        }
+    });
+    assert.equal(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(17, 24, 39)');
+    assert.equal(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el, '::after').content), 'none');
+    assert.equal(await page.locator('.osdHeader').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(10, 20, 30, 0.5)');
     await context.close();
 });
 

@@ -187,7 +187,7 @@
         if (!link) {
             link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = new URL('tv.css?v=' + encodeURIComponent(config.version || '0.1.2'), assetBase).href;
+            link.href = new URL('tv.css?v=' + encodeURIComponent(config.version || '0.1.3'), assetBase).href;
             link.onload = function () { loaded = true; reconcile(); };
             link.onerror = function () { console.warn('ElegantFin TV: stylesheet could not be loaded.'); };
             document.head.appendChild(link);
@@ -228,7 +228,7 @@
                 var capped = false;
                 try {
                     new URL(entry.name).searchParams.forEach(function (value, key) {
-                        if (/^(maxwidth|maxheight|width|height)$/i.test(key) && Number(value) > 0) capped = true;
+                        if (/^(maxwidth|maxheight|width|height|fillwidth|fillheight)$/i.test(key) && Number(value) > 0) capped = true;
                     });
                 } catch (_) { /* Aggregate timing remains useful for an unparseable URL. */ }
                 // Keep only numbers/types, never URLs, IDs, query strings or tokens.
@@ -335,15 +335,15 @@
                 if (result.cancelled || diagnosticsPanel !== panel) return;
                 function number(value) { return value === null ? 'n/v' : value; }
                 var rows = [
-                    'ElegantFin TV ' + (config.version || '0.1.2') + ' · ' + result.profile + ' · Chrome ' + result.browserEngine,
+                    'ElegantFin TV ' + (config.version || '0.1.3') + ' · ' + result.profile + ' · Chrome ' + result.browserEngine,
                     result.viewport.width + '×' + result.viewport.height + ' · DPR ' + result.viewport.pixelRatio + ' · ' + result.startedAt,
                     'Frames/s: ' + number(result.frameSamplesPerSecond) + ' · längste Pause: ' + number(result.longestFrameMs) + ' ms',
-                    'Framepausen >50 ms: ' + number(result.framesOver50Ms) + ' · lange JS-Aufgaben: ' + number(result.longTaskCount),
+                    'Framepausen >50 ms: ' + number(result.framesOver50Ms) + ' · lange Hauptthread-Aufgaben: ' + number(result.longTaskCount),
                     'Bildanfragen: ' + result.imageRequestsObserved + ' · langsamste: ' + number(result.slowestImageRequestMs) + ' ms'
                 ];
                 Object.keys(result.images).forEach(function (kind) {
                     var g = result.images[kind];
-                    rows.push(kind + ': ' + g.count + ' · ohne Größenlimit: ' + g.uncapped + ' · max. ' + g.maxMs + ' ms · TTFB ' + number(g.maxTtfbMs) + ' ms · ' + Math.round(g.encodedBytes / 1024) + ' KiB');
+                    rows.push(kind + ': ' + g.count + ' · ohne Größenparameter: ' + g.uncapped + ' · max. ' + g.maxMs + ' ms · TTFB ' + number(g.maxTtfbMs) + ' ms · ' + Math.round(g.encodedBytes / 1024) + ' KiB');
                 });
                 rows.push('Bitte Ergebnis fotografieren. Keine Messdaten wurden versendet.');
                 rows.push('Cache/CORS können Werte verdecken. n/v = nicht verfügbar.');
@@ -353,7 +353,7 @@
     }
 
     window.ElegantFinTv = {
-        version: config.version || '0.1.2',
+        version: config.version || '0.1.3',
         diagnose: diagnose,
         status: function () { return { active: active, tv: isTv(), mediaBarFound: !!bar, profile: root.getAttribute('data-eftv-performance') }; },
         dispose: function () {

@@ -4,6 +4,16 @@ Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Üb
 
 **Status: lokal gebaut und automatisiert geprüft; noch nicht am LG C4 oder mit der privat angepassten Media Bar getestet.** Ein Geschwindigkeitsgewinn ist nicht gemessen. Poster-Anfragen werden nicht verändert; dieses Paket behebt keinen nachgewiesenen Server- oder Netzwerkengpass.
 
+## Update 0.1.3.0: reduziertes Profil nach TV-Vergleich
+
+Der Vergleich am LG C4 zeigte deutlich flüssigere Navigation bei deaktiviertem Plugin. Das grenzt den Engpass auf den aktivierten Pluginpfad ein, beweist aber noch keine einzelne CSS-Regel als Ursache.
+
+Das reduzierte Profil entfernt nun zusätzlich Kartenschatten, Kartenbreiten- und Fokusanimationen sowie den Zoom der Bildcontainer. Die Navigationskopfzeile erhält eine deckende Themefarbe statt transparenter, maskierter Ebenen über den scrollenden Postern. Posteranordnung, Farben, Fokusmarkierung und Media-Bar-Bedienung bleiben erhalten; das vollständige Profil behält die bisherigen Effekte. Der Geschwindigkeitsgewinn muss erneut auf dem TV gemessen werden.
+
+Die Diagnose erkennt jetzt auch `fillWidth`/`fillHeight`. Die alte Anzeige „ohne Größenlimit“ konnte dadurch größenangepasste Bilder falsch einordnen. Sie heißt nun „ohne Größenparameter“. „Lange Hauptthread-Aufgaben“ ersetzt die ungenaue Beschriftung „lange JS-Aufgaben“.
+
+Nach Aktualisierung auf **0.1.3.0** Server und TV-App neu starten, das Plugin wieder aktivieren und das reduzierte Profil wählen. Für den Vergleich denselben Bibliotheksabschnitt mit aktivierter Diagnose durchlaufen und das Ergebnis fotografieren. Es sind keine Änderungen an den Browser-CSS-Dateien oder der Media Bar erforderlich.
+
 ## Update 0.1.2.0 und Diagnose ohne Entwicklermodus
 
 - Poster erhalten eine Kontur am Vorschaubild statt zusätzlicher Konturen am umgebenden Link/Kartencontainer. Separate Aktionsbuttons bleiben erkennbar fokussiert.
@@ -12,7 +22,7 @@ Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Üb
 
 **Messung:** Auf 0.1.2.0 aktualisieren, Server neu starten. Am PC unter Dashboard → Plugins → ElegantFin TV **„Diagnose auf dem Fernseher anzeigen“** einschalten und speichern. Die TV-App vollständig beenden und öffnen. Nach fünf Sekunden Vorlauf fordert die Anzeige zu 15 Sekunden Navigation auf. Danach das Ergebnis fotografieren. Für einen zweiten Vergleich App erneut starten und denselben Weg durch inzwischen geladene Poster wählen. Anschließend die Diagnoseoption wieder ausschalten und die App neu öffnen.
 
-Der Bericht zeigt Chromium-Hauptversion, sichtbare Auflösung/DPR, Framepausen, lange JavaScript-Aufgaben und aggregierte Bildanfragen nach Primary/Backdrop/Logo/Thumb. „Ohne Größenlimit“ bedeutet, dass in der Anfrage weder width/height noch maxWidth/maxHeight mit positivem Wert vorkommen; daraus allein folgt nicht, dass das tatsächlich ausgelieferte Bild groß ist. TTFB enthält Netzwerk- und Serveranteile. Null-/Nullbyte-Werte können Cache- oder CORS-bedingt sein. Zum Messende noch laufende Anfragen und die Bilddekodierung werden nicht erfasst.
+Der Bericht zeigt Chromium-Hauptversion, sichtbare Auflösung/DPR, Framepausen, lange Hauptthread-Aufgaben und aggregierte Bildanfragen nach Primary/Backdrop/Logo/Thumb. „Ohne Größenparameter“ bedeutet ab 0.1.3.0, dass in der Anfrage weder width/height, maxWidth/maxHeight noch fillWidth/fillHeight mit positivem Wert vorkommen; daraus allein folgt nicht, dass das tatsächlich ausgelieferte Bild groß ist. TTFB enthält Netzwerk- und Serveranteile. Null-/Nullbyte-Werte können Cache- oder CORS-bedingt sein. Zum Messende noch laufende Anfragen und die Bilddekodierung werden nicht erfasst.
 
 Keine URLs, Medientitel, IDs oder Zugangstoken werden im Bericht gespeichert oder angezeigt. Es gibt keinen automatischen Upload. Die Anzeige nimmt keinen Fokus entgegen und bleibt für ein Foto sichtbar. Sie startet standardmäßig nur nach ausdrücklichem Einschalten auf TV/webOS, einmal pro App-Ladevorgang; normale Desktopbrowser erhalten keine Anzeige. Bei Abschalten des Frontends werden Messung und Observer beendet.
 
@@ -51,7 +61,7 @@ Das Repository und die Release-Downloads sind öffentlich erreichbar. Das Katalo
 
 1. Im Jellyfin-Dashboard die Serverversion **12.2.0** prüfen. Das Paket ist gegen diese API gebaut; andere Versionen sind nicht freigegeben.
 2. Eine zu Jellyfin 12.2 passende Version von [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) muss installiert sein. Bei einer Media-Bar-Installation kann sie bereits vorhanden sein. Das Plugin enthält diese Abhängigkeit nicht.
-3. Das Paket `artifacts/ElegantFinTV-0.1.2-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.2.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
+3. Das Paket `artifacts/ElegantFinTV-0.1.3-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.3.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
 4. Server starten. Im Dashboard unter Plugins **ElegantFin TV** öffnen. Standard: aktiviert, TV-Profil, Media-Bar-Adapter an, „Auch auf Desktop und Mobilgeräten“ aus.
 5. Die drei bisherigen CSS-Einbindungen können für den ersten TV-Test bestehen bleiben: Sie schließen `layout-tv` bereits aus. Die Dateien selbst müssen nicht bearbeitet werden. In der LG-App TV-Layout verwenden und die App vollständig schließen/neu starten, damit `index.html` neu angefordert wird.
 6. Das vorhandene Media-Bar-Plugin installiert lassen. ElegantFin TV lädt **keine zweite Media Bar** und ersetzt nicht deren Wiedergabe-, Favoriten-, Playlist- oder Trailerlogik.
@@ -78,7 +88,7 @@ ElegantFinTv.status()
 ElegantFinTv.diagnose(10).then(console.table)
 ```
 
-Die Diagnose liefert aktive Konfiguration, Frame-Abstände und aggregierte Bildanfragezeiten. Sie enthält keine URLs, Zugangsdaten oder Medientitel. Sie startet keine eigenen Bildanfragen. Browserpuffer, Cache, CORS und Hintergrundbetrieb begrenzen die Aussagekraft; Bilddekodierung und reine Serverzeit werden nicht separat erfasst. Für TTFB, Bildabmessungen und lange JavaScript-Aufgaben den Netzwerk-/Performance-Tab des Inspektors verwenden.
+Die Diagnose liefert aktive Konfiguration, Frame-Abstände und aggregierte Bildanfragezeiten. Sie enthält keine URLs, Zugangsdaten oder Medientitel. Sie startet keine eigenen Bildanfragen. Browserpuffer, Cache, CORS und Hintergrundbetrieb begrenzen die Aussagekraft; Bilddekodierung und reine Serverzeit werden nicht separat erfasst. Für TTFB, Bildabmessungen und lange Hauptthread-Aufgaben den Netzwerk-/Performance-Tab des Inspektors verwenden.
 
 ## Media-Bar-Kompatibilität
 

@@ -16,6 +16,44 @@
     --ef12-ratingsGridOpen: 0s;
     --ef12-itemBarEnter: 0s;
     --iconPack: "Material Symbols Rounded Minimal";
+    --cardShadow: none !important;
+}
+
+/* Cover the card wrapper and native TV focus animation as well as the image.
+ * Keep positioning transforms on the card itself and on action icons intact. */
+:root[data-eftv][data-eftv-performance="balanced"] :is(.card, .cardBox, .cardScalable, .cardImageContainer, .cardOverlayContainer, .cardPadder, .itemSelectionPanel),
+:root[data-eftv][data-eftv-performance="balanced"] :is(.cardBox, .cardScalable, .cardImageContainer, .cardOverlayContainer)::before,
+:root[data-eftv][data-eftv-performance="balanced"] :is(.cardBox, .cardScalable, .cardImageContainer, .cardOverlayContainer)::after {
+    animation: none !important;
+    transition: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+:root[data-eftv][data-eftv-performance="balanced"] :is(.cardBox, .cardScalable, .cardImageContainer, .itemSelectionPanel) {
+    transform: none !important;
+    will-change: auto !important;
+}
+
+/* Remove only the decorative moving shine, not card buttons or badges. */
+:root[data-eftv][data-eftv-performance="balanced"] .cardOverlayContainer::after {
+    content: none !important;
+}
+
+/* An opaque navigation header avoids compositing scrolling posters through
+ * the theme's translucent, masked header layers. Playback headers are excluded. */
+:root[data-eftv][data-eftv-performance="balanced"] :is(.skinHeader:not(.osdHeader), .MuiAppBar-root:not(.osdHeader)) {
+    background: var(--darkerGradientPoint) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+}
+
+:root[data-eftv][data-eftv-performance="balanced"] :is(.skinHeader:not(.osdHeader), .MuiAppBar-root:not(.osdHeader))::before,
+:root[data-eftv][data-eftv-performance="balanced"] :is(.skinHeader:not(.osdHeader), .MuiAppBar-root:not(.osdHeader))::after {
+    content: none !important;
 }
 
 :root[data-eftv][data-eftv-performance="balanced"] :is(.cardScalable, .cardImageContainer, .cardOverlayContainer, .backdropImageFadeIn, .itemBackdrop, .backgroundContainer),
