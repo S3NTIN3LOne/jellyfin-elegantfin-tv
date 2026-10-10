@@ -10,6 +10,7 @@ public sealed class AssetsController : ControllerBase
 {
     private static readonly Lazy<string> Script = new(() => ReadAsset("tv.js"));
     private static readonly Lazy<string> Styles = new(() => ReadAsset("tv.css"));
+    private static readonly Lazy<string> FullStyles = new(() => ReadAsset("tv-full.css"));
 
     // Only static frontend code and non-secret presentation options are public.
     // Configuration writes use Jellyfin's existing administrator-only plugin API.
@@ -39,6 +40,14 @@ public sealed class AssetsController : ControllerBase
     {
         Response.Headers.CacheControl = "public,max-age=3600";
         return Content(Styles.Value, "text/css; charset=utf-8");
+    }
+
+    [AllowAnonymous]
+    [HttpGet("tv-full.css")]
+    public ContentResult FullCss()
+    {
+        Response.Headers.CacheControl = "public,max-age=3600";
+        return Content(FullStyles.Value, "text/css; charset=utf-8");
     }
 
     [AllowAnonymous]

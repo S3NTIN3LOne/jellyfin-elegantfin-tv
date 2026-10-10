@@ -1,0 +1,138 @@
+/* ElegantFin colours and shapes on Jellyfin's native layout and motion.
+ * Intentionally independent of the desktop theme and its Modern/Media Bar add-ons.
+ * Do not set card widths, scrolling, positioning transforms or transitions here. */
+:root[data-eftv] {
+    --accentColor: #5d55e7;
+    --accentHoverColor: #756fe2;
+    --darkerGradientPoint: #111827;
+    --lighterGradientPoint: #1d2635;
+    --textColor: #d1d5db;
+    --dimTextColor: #9ca3af;
+    --borderColor: #47505c;
+    --eftv-focus: #a5b4fc;
+    color-scheme: dark;
+    color: var(--textColor);
+    font-family: Inter, sans-serif;
+    font-weight: 425;
+}
+
+:root[data-eftv] body {
+    font-family: Inter, sans-serif;
+    color: var(--textColor);
+}
+
+:root[data-eftv] :is(.backgroundContainer, .mainDrawer, .dialog, .paperList) {
+    background-color: var(--darkerGradientPoint);
+    color: var(--textColor);
+}
+
+/* Solid navigation surfaces avoid blurring the scrolling page behind them.
+ * Playback controls keep Jellyfin's own transparent treatment. */
+:root[data-eftv] :is(.skinHeader:not(.osdHeader), .MuiAppBar-root:not(.osdHeader)) {
+    background: var(--darkerGradientPoint) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+:root[data-eftv] :is(.sectionTitle, .pageTitle, .detailPagePrimaryContainer h1) {
+    color: #fff;
+    font-weight: 600;
+}
+
+:root[data-eftv] :is(.cardText, .secondaryText, .listItemBodyText) {
+    color: var(--dimTextColor);
+}
+
+:root[data-eftv] .cardText-first {
+    color: var(--textColor);
+}
+
+:root[data-eftv] :is(.cardScalable, .cardImageContainer, .cardOverlayContainer, .cardPadder) {
+    border-radius: .5em;
+}
+
+/* Preserve round avatars and artist portraits. */
+:root[data-eftv] .overflowPortraitCard .cardImageContainer,
+:root[data-eftv] .portraitCard .cardImageContainer {
+    background-color: var(--lighterGradientPoint);
+}
+
+:root[data-eftv] .backdropCard .cardImageContainer {
+    background-color: var(--lighterGradientPoint);
+}
+
+:root[data-eftv] .personCard :is(.cardScalable, .cardImageContainer),
+:root[data-eftv] .squareCard .cardImageContainer-round {
+    border-radius: 50%;
+}
+
+:root[data-eftv] :is(.raised, .emby-input, .emby-textarea, .emby-select) {
+    border-radius: .5em;
+    background-color: var(--lighterGradientPoint);
+    color: var(--textColor);
+}
+
+:root[data-eftv] :is(.button-submit, .button-accent, .navMenuOption-selected) {
+    background-color: var(--accentColor);
+    color: #fff;
+}
+
+:root[data-eftv] .emby-tab-button-active {
+    color: var(--eftv-focus);
+    border-bottom-color: var(--accentColor);
+}
+
+:root[data-eftv] :is(.itemProgressBarForeground, .sliderBubble) {
+    background-color: var(--accentColor);
+}
+
+/* Focus styling changes colour/outline only; native focus zoom is retained. */
+:root[data-eftv] :is(a, button, input, select, textarea, [tabindex]):focus-visible,
+:root[data-eftv] .show-focus:focus,
+:root[data-eftv] #slides-container [data-eftv-control]:focus {
+    outline: 3px solid var(--eftv-focus) !important;
+    outline-offset: 3px !important;
+}
+
+:root[data-eftv] .card:focus .cardScalable,
+:root[data-eftv] .card:focus-within .cardScalable {
+    outline: 3px solid var(--eftv-focus) !important;
+    outline-offset: -3px !important;
+}
+
+:root[data-eftv] .card:has(.cardScalable):focus,
+:root[data-eftv] .card:has(.cardScalable) :is(.cardImageContainer, .cardContent):focus {
+    outline: none !important;
+}
+
+/* The independent Media Bar keeps its sizing, controls and slide transitions.
+ * Only its fixed blur effects and animated logo are simplified. */
+:root[data-eftv] #slides-container :is(.play-button, .detail-button, .favorite-button, .pause-button, .volume-toggle, .left-arrow, .right-arrow) {
+    border-radius: .5em;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    font-family: Inter, sans-serif;
+}
+
+:root[data-eftv] #slides-container :is(.detail-button, .favorite-button, .arrow) {
+    background-color: var(--lighterGradientPoint);
+    color: var(--textColor);
+}
+
+:root[data-eftv] #slides-container .play-button {
+    background-color: var(--accentColor);
+    color: #fff;
+}
+
+:root[data-eftv] #slides-container :is(.slide-content, .detail-button, .favorite-button, .arrow) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+:root[data-eftv] #slides-container .logo.animate {
+    animation: none !important;
+}
+
+:root[data-eftv] #slides-container[data-eftv-adapted] .slide[inert] {
+    pointer-events: none;
+}

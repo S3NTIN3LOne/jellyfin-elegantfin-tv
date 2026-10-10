@@ -10,6 +10,7 @@ import { transformTheme } from '../tools/build.mjs';
 const root = new URL('../', import.meta.url);
 const js = await readFile(new URL('src/tv.js', root), 'utf8');
 const css = await readFile(new URL('src/Jellyfin.Plugin.ElegantFinTv/Web/tv.css', root), 'utf8');
+const fullCss = await readFile(new URL('src/Jellyfin.Plugin.ElegantFinTv/Web/tv-full.css', root), 'utf8');
 let browser, server, base;
 let requests = [];
 const fixture = `<!doctype html><html class="layout-tv"><head><meta charset="utf-8">
@@ -35,6 +36,9 @@ before(async () => {
         } else if (req.url.includes('bootstrap.js')) {
             res.setHeader('content-type', 'text/javascript');
             res.end('window.ElegantFinTvConfig={enabled:true,mediaBar:true,performance:"balanced"};\n' + js);
+        } else if (req.url.includes('tv-full.css')) {
+            res.setHeader('content-type', 'text/css');
+            res.end(fullCss);
         } else if (req.url.includes('tv.css')) {
             res.setHeader('content-type', 'text/css');
             res.end(css);
@@ -101,12 +105,30 @@ test('TV activation preserves Jellyfin layout and reverse-proxy base URL; blur i
     assert.equal(await page.evaluate(() => document.fonts.check('425 16px Inter')), true);
     assert.equal(css.includes('fonts.googleapis.com'), false);
     assert.equal(css.includes('fonts.gstatic.com'), false);
-    assert.match(await page.locator('.material-icons').evaluate(el => getComputedStyle(el).fontFamily), /Rounded Minimal/);
+    assert.doesNotMatch(await page.locator('.material-icons').evaluate(el => getComputedStyle(el).fontFamily), /Rounded/);
+    assert.equal(requests.some(path => path.includes('tv-full.css')), false);
     const fonts = JSON.parse(await readFile(new URL('vendor/fonts/sources.json', root), 'utf8'));
     const fullIcons = fonts.fonts.find(font => font.url.includes('/materialsymbolsrounded/'));
     assert.ok(fullIcons);
     assert.equal(requests.some(path => path.endsWith('/fonts/' + fullIcons.file)), false);
     await context.close();
+});
+
+test('full comparison loads its own bundle; minimal leaves Media Bar transitions intact', async () => {
+    const {page, context} = await open();
+    await page.addStyleTag({content:'#slides-container .slide {transition:opacity .7s linear}'});
+    assert.equal(await page.locator('#one').evaluate(el => getComputedStyle(el).transitionDuration), '0.7s');
+    await context.close();
+    requests = [];
+    const full = await browser.newPage();
+    await full.route('**/bootstrap.js', route => route.fulfill({contentType:'text/javascript', body:
+        'window.ElegantFinTvConfig={enabled:true,performance:"full"};\n' + js}));
+    await full.goto(base + '/jellyfin/web/index.html');
+    await full.waitForFunction(() => window.ElegantFinTv?.status().active);
+    assert.ok(requests.some(path => path.startsWith('/jellyfin/ElegantFinTv/tv-full.css?')));
+    assert.equal(requests.some(path => path.includes('/tv.css?')), false);
+    assert.match(await full.locator('.material-icons').evaluate(el => getComputedStyle(el).fontFamily), /Rounded/);
+    await full.close();
 });
 
 test('inactive slides cannot capture focus; D-pad and Enter work without native double clicks', async () => {
@@ -270,9 +292,9 @@ test('diagnosis groups image timing without retaining URLs or tokens', async () 
     await context.close();
 });
 
-test('balanced cards suppress native focus zoom and shadows while preserving actions and full profile', async () => {
+test('minimal theme preserves native card dimensions, focus zoom, transitions and actions', async () => {
     const {page, context} = await open();
-    await page.addStyleTag({ content: '.card.show-animation:focus .cardBox {transform:scale(1.1);transition:transform .2s;box-shadow:0 0 12px red} .cardOverlayContainer::after {content:"";transition:transform 1s}' });
+    await page.addStyleTag({ content: '.card {width:150px} .card.show-animation:focus .cardBox {transform:scale(1.1);transition:transform .2s;box-shadow:0 0 12px red} .cardOverlayContainer::after {content:"";transition:transform 1s}' });
     await page.evaluate(() => {
         const card = document.createElement('div');
         card.id = 'motion-card'; card.className = 'card show-animation'; card.tabIndex = 0;
@@ -283,15 +305,19 @@ test('balanced cards suppress native focus zoom and shadows while preserving act
     const read = () => page.locator('#motion-card .cardBox').evaluate(el => {
         const s = getComputedStyle(el); return {transform:s.transform, shadow:s.boxShadow, duration:s.transitionDuration};
     });
-    assert.deepEqual(await read(), {transform:'none', shadow:'none', duration:'0s'});
-    assert.equal(await page.locator('#motion-card .cardOverlayContainer').evaluate(el => getComputedStyle(el, '::after').content), 'none');
+    await page.waitForTimeout(250);
+    const native = await read();
+    assert.equal(native.transform, 'matrix(1.1, 0, 0, 1.1, 0, 0)');
+    assert.equal(native.duration, '0.2s');
+    assert.notEqual(native.shadow, 'none');
+    assert.equal(await page.locator('#motion-card').evaluate(el => getComputedStyle(el).width), '150px');
     assert.equal(await page.locator('#motion-card .cardScalable').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
     await page.locator('#motion-card button').focus();
     assert.equal(await page.evaluate(() => document.activeElement.textContent), 'Play');
-    await page.evaluate(() => document.documentElement.setAttribute('data-eftv-performance', 'full'));
+    await page.evaluate(() => window.ElegantFinTv.dispose());
     await page.locator('#motion-card').focus();
-    assert.notEqual((await read()).shadow, 'none');
-    assert.notEqual((await read()).duration, '0s');
+    await page.waitForTimeout(250);
+    assert.deepEqual(await read(), native);
     await context.close();
 });
 
@@ -304,7 +330,6 @@ test('balanced navigation header is opaque; playback header is not overridden', 
         }
     });
     assert.equal(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(17, 24, 39)');
-    assert.equal(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el, '::after').content), 'none');
     assert.equal(await page.locator('.osdHeader').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(10, 20, 30, 0.5)');
     await context.close();
 });

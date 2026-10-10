@@ -201,7 +201,7 @@
         if (parts.theme && !link) {
             link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = new URL('tv.css?v=' + encodeURIComponent(config.version || '0.1.4'), assetBase).href;
+            link.href = new URL((config.performance === 'full' ? 'tv-full.css' : 'tv.css') + '?v=' + encodeURIComponent(config.version || '0.1.5'), assetBase).href;
             link.onload = function () { loaded = true; reconcile(); };
             link.onerror = function () { console.warn('ElegantFin TV: stylesheet could not be loaded.'); };
             document.head.appendChild(link);
@@ -432,7 +432,7 @@
                 measurementRun++;
                 function number(value) { return value === null ? 'n/v' : value; }
                 var rows = [
-                    'ElegantFin TV ' + (config.version || '0.1.4') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
+                    'ElegantFin TV ' + (config.version || '0.1.5') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
                     'Theme: ' + result.components.theme + ' · Adapter: ' + result.components.adapter + ' · Profil: ' + (result.profile || 'Standard') + ' · Chrome ' + result.browserEngine,
                     result.viewport.width + '×' + result.viewport.height + ' · DPR ' + result.viewport.pixelRatio + ' · ' + result.startedAt,
                     'Frames/s: ' + number(result.frameSamplesPerSecond) + ' · längste Pause: ' + number(result.longestFrameMs) + ' ms',
@@ -457,7 +457,7 @@
     }
 
     window.ElegantFinTv = {
-        version: config.version || '0.1.4',
+        version: config.version || '0.1.5',
         diagnose: diagnose,
         status: function () { return { active: active, tv: isTv(), mediaBarFound: !!bar, profile: root.getAttribute('data-eftv-performance'), components: components() }; },
         dispose: function () {

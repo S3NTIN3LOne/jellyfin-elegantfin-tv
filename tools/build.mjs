@@ -69,9 +69,18 @@ export async function build() {
     if (createHash('sha256').update(bytes).digest('hex') !== font.sha256) throw new Error(`Font checksum mismatch: ${font.file}`);
     await writeFile(new URL(`fonts/${font.file}`, out), bytes);
   }
-  await writeFile(new URL('tv.css', out), result.css);
+  await writeFile(new URL('tv-full.css', out), result.css);
+  const minimalFonts = postcss.parse(await readFile(new URL('vendor/fonts/fonts.css', root), 'utf8'));
+  minimalFonts.walkAtRules('font-face', rule => {
+    const family = rule.nodes.find(node => node.prop === 'font-family')?.value;
+    if (family !== "'Inter'") rule.remove();
+  });
+  minimalFonts.walkComments(comment => comment.remove());
+  minimalFonts.append(postcss.parse(await readFile(new URL('src/tv-minimal.css', root), 'utf8')).nodes);
+  const minimal = await postcss([cssnano({ preset: 'default' })]).process(minimalFonts, { from: undefined, map: false });
+  await writeFile(new URL('tv.css', out), minimal.css);
   await writeFile(new URL('tv.js', out), await readFile(new URL('src/tv.js', root)));
-  console.log(`TV stylesheet: ${Buffer.byteLength(result.css)} bytes. Vendor checksums verified.`);
+  console.log(`Minimal TV stylesheet: ${Buffer.byteLength(minimal.css)} bytes; full comparison: ${Buffer.byteLength(result.css)} bytes. Vendor checksums verified.`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) await build();

@@ -2,13 +2,13 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$inputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.4-jf12.2.zip'
-$outputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.4-jf12.2-catalog.zip'
+$inputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.5-jf12.2.zip'
+$outputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.5-jf12.2-catalog.zip'
 $inputZip = [IO.Compression.ZipFile]::OpenRead($inputPath)
 $outputStream = [IO.File]::Open($outputPath, [IO.FileMode]::Create)
 $outputZip = [IO.Compression.ZipArchive]::new($outputStream, [IO.Compression.ZipArchiveMode]::Create)
 try {
-    $prefix = 'ElegantFinTV_0.1.4.0/'
+    $prefix = 'ElegantFinTV_0.1.5.0/'
     foreach ($entry in $inputZip.Entries) {
         if (!$entry.FullName.StartsWith($prefix)) { throw 'Unexpected manual-package structure' }
         $name = $entry.FullName.Substring($prefix.Length)
@@ -24,14 +24,14 @@ $manifest = @(@{
     guid = 'f723a150-5b12-4ed8-8a31-450b54b2eac9'
     name = 'ElegantFin TV'
     overview = 'ElegantFin for webOS and TV layouts'
-    description = 'TV theme with reduced effects and Media Bar focus support. Requires a compatible File Transformation plugin. LG C4 integration still requires on-device verification.'
+    description = 'Minimal ElegantFin design with native Jellyfin motion and Media Bar focus support. Requires a compatible File Transformation plugin. LG C4 integration still requires on-device verification.'
     owner = 'S3NTIN3LOne'
     category = 'General'
     versions = @(@{
-        version = '0.1.4.0'
-        changelog = 'Add TV-only comparison modes for reference, theme, adapter and complete setup; manual remote-triggered measurements with hidden overlay, total long-task time and bounded image dimension samples. Desktop CSS is unchanged.'
+        version = '0.1.5.0'
+        changelog = 'Replace the balanced profile with independent minimal styling: ElegantFin colours, Inter and rounded cards with native Jellyfin layout and motion. Keep the full theme in a separately loaded comparison bundle. TV validation pending.'
         targetAbi = '12.2.0.0'
-        sourceUrl = 'https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.4/ElegantFinTV-0.1.4-jf12.2-catalog.zip'
+        sourceUrl = 'https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.5/ElegantFinTV-0.1.5-jf12.2-catalog.zip'
         checksum = (Get-FileHash -LiteralPath $outputPath -Algorithm MD5).Hash.ToLowerInvariant()
         timestamp = [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
     })

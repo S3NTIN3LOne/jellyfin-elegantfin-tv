@@ -19,7 +19,7 @@ public sealed class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
     public static Plugin? Instance { get; private set; }
     public override string Name => "ElegantFin TV";
-    public override string Description => "ElegantFin browser styling with TV focus support and a reduced-effects profile.";
+    public override string Description => "Minimal ElegantFin styling with native Jellyfin motion and optional Media Bar focus support.";
     public override Guid Id => Guid.Parse("f723a150-5b12-4ed8-8a31-450b54b2eac9");
 
     public Plugin(IApplicationPaths paths, IXmlSerializer serializer) : base(paths, serializer)

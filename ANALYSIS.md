@@ -1,5 +1,15 @@
 # Analyse und Grenzen
 
+## TV-Vergleich vom 10.10.2026 und schlankes Design 0.1.5.0
+
+Auf der Startseite wurden in Version 0.1.4.0 Referenz und Nur Theme verglichen, jeweils ohne Fokusadapter. Referenz: 37 Frame-Aufrufe/s, 42 Pausen über 50 ms, 56 lange Aufgaben mit insgesamt 6337 ms in 15,9 s. Nur Theme (balanced): 11 Frame-Aufrufe/s, 70 Pausen, 83 lange Aufgaben mit insgesamt 11666 ms in 15 s. Die langsamsten erfassten Bildanfragen lagen bei 38/54 ms. Die aggregierten komprimierten Bilddaten unterschieden sich mit 1161/5859 KiB deutlich; Cache und Bildauswahl sind nicht kontrolliert. Der Nutzer beschreibt die Referenz mit und ohne Diagnose als gleichermaßen flüssig.
+
+Damit ist der Fokusadapter für den beobachteten Einbruch nicht erforderlich. Einzelne CSS-Regeln oder Bilddekodierung sind als Ursache noch nicht nachgewiesen. Die Messung zählt requestAnimationFrame-Aufrufe, keine direkt gemessenen GPU-Frames. CSS-Hintergrundbilder fehlen in den Größenstichproben.
+
+Auf Wunsch des Nutzers wird das Design ab 0.1.5.0 im Standardprofil eigenständig und minimal aufgebaut. Farben, Inter-Schrift, Rundungen und Fokusmarkierung bleiben am Custom CSS orientiert; Layout und Bewegung stammen aus Jellyfin. Der Build erzeugt getrennte Dateien für das schlanke Standardprofil und das vollständige Vergleichsprofil. Das Standardprofil lädt keine der drei transformierten Desktop-CSS-Dateien und keine zusätzliche Iconschrift. Die Ausgangsdateien und Vendor-Kopien bleiben unverändert.
+
+Geprüft: 21 Frontendchecks einschließlich nativer Kartenbreite, Fokus-Zoom, Übergängen, Media-Bar-Slide-Transition, getrenntem Laden der Profile, Fokusbedienung, Diagnose und Rückbau; Release-Build und Serverchecks einschließlich beider eingebetteter CSS-Routen. Die Browserchecks verwenden eine synthetische Fixture. Eine optische Abnahme in der tatsächlichen Jellyfin-Oberfläche und ein Performancevergleich auf dem LG stehen aus.
+
 ## Weitere Untersuchung und Update 0.1.2.0
 
 Das bereitgestellte Serverlog bestätigt den Start von ElegantFin TV 0.1.1.0 mit `balanced`, Media Bar 3.0.0.2 und File Transformation 3.0.0.1. Die Registrierung unter `index.html` ist erfolgreich. Das Log endet kurz nach dem Verbindungsaufbau und enthält keine einzelnen Bildanfragen mit Dauer. Der Fehler im ScheduledTasks-WebSocket betrifft eine bereits freigegebene CancellationTokenSource; er belegt keine Ursache für langsames Scrollen oder Poster. Auch die `/wwwroot`-Warnung allein erklärt die inzwischen funktionierende Theme-Anzeige nicht. Das private Log wird nicht ins Repository aufgenommen.

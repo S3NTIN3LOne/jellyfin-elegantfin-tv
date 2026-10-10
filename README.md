@@ -2,7 +2,19 @@
 
 Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Übernimmt die Gestaltung aus den drei bereitgestellten CSS-Dateien, aktiviert sie auf TVs und ergänzt Fokusbedienung für eine vorhandene Media Bar.
 
-**Status: Die bisherigen TV-Messungen zeigen weiterhin Ruckler mit aktivem Plugin.** Version 0.1.4.0 ergänzt kontrollierte Vergleichsmessungen; sie ist lokal automatisiert geprüft, noch nicht auf dem LG getestet. Poster-Anfragen werden nicht verändert.
+**Status: Version 0.1.5.0 ist ein lokal gebauter Stand mit eigenständigem, schlankem TV-Design.** Browser- und Serverchecks bestehen; Darstellung und Geschwindigkeit auf dem LG sind noch zu prüfen. Der veröffentlichte Katalog bleibt bis zur Veröffentlichung auf dem bisherigen Stand.
+
+## Update 0.1.5.0: schlankes Design, native Bewegung
+
+Das Standardprofil **„TV: schlankes Design mit Jellyfin-Animationen“** übernimmt ElegantFins dunkelblaue Flächen, violette Akzente, Inter-Schrift, abgerundete Poster und Schaltflächen sowie eine sichtbare Fokusmarkierung. Es lädt ein eigenes Stylesheet von rund 6,6 KB einschließlich Fontdefinitionen. Die drei Desktop-Stylesheets und deren Modern-/Media-Bar-Layoutanpassungen werden in diesem Profil nicht geladen. Das bisherige vollständige Paket umfasst rund 194 KB; diese Größen sind keine Messung der Rendergeschwindigkeit.
+
+Kartenbreiten, Posteranordnung, Scrollverhalten, Fokus-Zoom und Animationen kommen von Jellyfin. Die vorhandene Media Bar behält ihre Geometrie und Slide-Übergänge. Ihre festen Unschärfeeffekte an Inhalt und Bedienelementen sowie die Logoanimation werden reduziert. Icons verwenden Jellyfins vorhandene Schrift; das schlanke Profil lädt nur die lokal eingebundene Inter-Schrift bei Bedarf. Das bisherige vollständige Theme bleibt als zweite Darstellung auswählbar und wird als separate Datei geladen.
+
+Bestehende Einstellungen mit `balanced` verwenden nach dem Update automatisch das neue Design; `full` bleibt das bisherige vollständige Theme. Vergleichsmodi und Fokusadapter funktionieren weiterhin wie unten beschrieben. Für den ersten Vergleich auf der Startseite **Nur Theme** und die schlanke Darstellung wählen; anschließend den gleichen Abschnitt erneut mit bereits geladenen Bildern durchlaufen. Der zuletzt gemessene Modus Referenz zeigt weiterhin kein Theme. Für den Alltag anschließend Normalbetrieb wählen und die Diagnose ausschalten.
+
+Im Jellyfin-Plugin-Katalog nach Updates suchen und auf **0.1.5.0** aktualisieren. Der Repository-Link bleibt gleich. F?r die manuelle Installation das Paket `ElegantFinTV-0.1.5-jf12.2.zip` aus dem GitHub-Release verwenden (lokal unter `artifacts/`). Bei beendetem Server den bisherigen ElegantFinTV-Pluginordner durch den enthaltenen Ordner `ElegantFinTV_0.1.5.0` ersetzen, damit nicht beide Versionen parallel installiert sind. Server und TV-App vollständig neu starten. Veröffentlichung und Katalogupdate sind noch nicht erfolgt.
+
+Die folgenden Updateabschnitte dokumentieren frühere Versionen; die damaligen Effektkorrekturen gelten für das alte Theme. Das schlanke Design wird in `src/tv-minimal.css` gepflegt. `src/tv-overrides.css` gehört weiterhin zum vollständigen Vergleichsprofil.
 
 ## Update 0.1.4.0: gezielte Vergleichsmessungen
 
@@ -91,7 +103,7 @@ Das Repository und die Release-Downloads sind öffentlich erreichbar. Das Katalo
 
 1. Im Jellyfin-Dashboard die Serverversion **12.2.0** prüfen. Das Paket ist gegen diese API gebaut; andere Versionen sind nicht freigegeben.
 2. Eine zu Jellyfin 12.2 passende Version von [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) muss installiert sein. Bei einer Media-Bar-Installation kann sie bereits vorhanden sein. Das Plugin enthält diese Abhängigkeit nicht.
-3. Das Paket `artifacts/ElegantFinTV-0.1.4-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.4.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
+3. Das Paket `artifacts/ElegantFinTV-0.1.5-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.5.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
 4. Server starten. Im Dashboard unter Plugins **ElegantFin TV** öffnen. Standard: aktiviert, TV-Profil, Media-Bar-Adapter an, „Auch auf Desktop und Mobilgeräten“ aus.
 5. Die drei bisherigen CSS-Einbindungen können für den ersten TV-Test bestehen bleiben: Sie schließen `layout-tv` bereits aus. Die Dateien selbst müssen nicht bearbeitet werden. In der LG-App TV-Layout verwenden und die App vollständig schließen/neu starten, damit `index.html` neu angefordert wird.
 6. Das vorhandene Media-Bar-Plugin installiert lassen. ElegantFin TV lädt **keine zweite Media Bar** und ersetzt nicht deren Wiedergabe-, Favoriten-, Playlist- oder Trailerlogik.
