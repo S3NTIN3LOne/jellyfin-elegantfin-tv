@@ -5,12 +5,12 @@
         "description":  "TV theme with reduced effects and Media Bar focus support. Requires a compatible File Transformation plugin. LG C4 integration still requires on-device verification.",
         "versions":  [
                          {
-                             "changelog":  "Fix frontend injection being skipped when Media Bar registers index.html. Both plugins now share the same File Transformation pipeline. Existing desktop CSS is unchanged.",
-                             "version":  "0.1.1.0",
-                             "checksum":  "7318f50dd129341006e8210a78176683",
-                             "timestamp":  "2026-10-09T23:44:42Z",
+                             "changelog":  "Fix duplicate poster focus outlines, reduce additional Media Bar blur and logo effects, and add opt-in on-TV diagnostics without Developer Mode. Existing desktop CSS is unchanged.",
+                             "version":  "0.1.2.0",
+                             "checksum":  "dca0ad9e46a49a976aa04bf3e350d5e0",
+                             "timestamp":  "2026-10-10T00:56:50Z",
                              "targetAbi":  "12.2.0.0",
-                             "sourceUrl":  "https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.1/ElegantFinTV-0.1.1-jf12.2-catalog.zip"
+                             "sourceUrl":  "https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.2/ElegantFinTV-0.1.2-jf12.2-catalog.zip"
                          }
                      ],
         "category":  "General",
