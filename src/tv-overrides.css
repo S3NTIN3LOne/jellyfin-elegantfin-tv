@@ -126,18 +126,5 @@
     }
 }
 
-/* Opt-in on-TV measurement; does not capture focus or block navigation. */
-:root[data-eftv] #eftv-diagnostics {
-    position: fixed;
-    z-index: 2147483647;
-    inset: 1rem 1rem auto auto;
-    max-width: min(42rem, 85vw);
-    padding: 1rem 1.25rem;
-    border: 2px solid #a5b4fc;
-    border-radius: .5rem;
-    background: #111827;
-    color: #fff;
-    font: 500 1rem/1.5 sans-serif;
-    white-space: pre-line;
-    pointer-events: none;
-}
+/* Diagnostic UI styles are loaded independently, only when enabled, so the
+ * reference and adapter-only modes do not need this theme stylesheet. */

@@ -2,7 +2,37 @@
 
 Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Übernimmt die Gestaltung aus den drei bereitgestellten CSS-Dateien, aktiviert sie auf TVs und ergänzt Fokusbedienung für eine vorhandene Media Bar.
 
-**Status: lokal gebaut und automatisiert geprüft; noch nicht am LG C4 oder mit der privat angepassten Media Bar getestet.** Ein Geschwindigkeitsgewinn ist nicht gemessen. Poster-Anfragen werden nicht verändert; dieses Paket behebt keinen nachgewiesenen Server- oder Netzwerkengpass.
+**Status: Die bisherigen TV-Messungen zeigen weiterhin Ruckler mit aktivem Plugin.** Version 0.1.4.0 ergänzt kontrollierte Vergleichsmessungen; sie ist lokal automatisiert geprüft, noch nicht auf dem LG getestet. Poster-Anfragen werden nicht verändert.
+
+## Update 0.1.4.0: gezielte Vergleichsmessungen
+
+Im Dashboard unter Plugins → ElegantFin TV das Plugin aktivieren, die reduzierte Darstellung beibehalten und einen **Vergleichsmodus** wählen:
+
+| Modus | TV-Stylesheet dieses Plugins | Fokusadapter dieses Plugins |
+| --- | --- | --- |
+| Referenz | aus | aus |
+| Nur Theme | an | aus |
+| Nur Adapter | aus | an |
+| Komplett | an | an |
+
+Die eigentliche Media Bar und anderweitig eingebundenes CSS bleiben unverändert. Die Vergleichsmodi gelten ausschließlich auf TV/webOS und übersteuern dort die Einstellung „Media-Bar-Fokusbedienung ergänzen“. **Normalbetrieb** verwendet wieder die normalen Einstellungen. Referenz und Nur Adapter laden weder das TV-Stylesheet noch dessen Fonts. Ein kleiner Diagnose-Stil wird nur bei eingeschalteter Diagnose geladen.
+
+### Ablauf ohne Entwicklermodus
+
+1. Auf **0.1.4.0** aktualisieren, Server neu starten. Plugin aktivieren, Vergleichsmodus **Referenz** und **„Diagnose auf dem Fernseher anzeigen“** wählen, speichern.
+2. TV-App vollständig neu öffnen. Die Filmbibliothek und den gewünschten Startpunkt öffnen. Es gibt keine automatische Messung beim App-Start.
+3. Die **rote Farbtaste** drücken oder den Bildschirmbutton **„Messung starten“** wählen. Drei Sekunden Vorlauf geben Zeit, den Fokus wieder auf die Poster zu setzen. Danach verschwindet die Anzeige und es folgen 15 Sekunden Navigation. Die rote Farbtaste wird nur bei aktivierter TV-Diagnose verwendet; auf einer Tastatur ist alternativ F8 möglich. Die Farbtaste entspricht [LGs dokumentiertem Keycode 403](https://webostv.developer.lge.com/develop/guides/magic-remote).
+4. Ergebnis fotografieren. Zum gleichen Startpunkt zurückkehren und mit der roten Taste erneut messen, diesmal mit bereits geladenen Postern. „Ausblenden“ versteckt das Ergebnis, die rote Taste bleibt verfügbar. Die Diagnose löscht keinen Cache; der erste Durchlauf ist daher nicht garantiert ungecached.
+5. Für **Nur Theme**, **Nur Adapter** und **Komplett** wiederholen. Nach jedem Moduswechsel speichern und die App vollständig neu öffnen. Darstellung, Bibliothek und Navigationsweg konstant halten. Der Bericht nennt Modus und Laufnummer; diese zählt pro App-Start neu.
+6. Für den Einfluss der Messung den gleichen Modus beibehalten, nur die Diagnose ausschalten und die App neu öffnen. Es erscheinen dann keine Diagnoseelemente, und keine Messung oder Bildgrößen-Stichprobe startet automatisch. Abschließend **Normalbetrieb** wählen und Diagnose ausschalten.
+
+Der Bericht zeigt jetzt zusätzlich die Gesamtdauer langer Hauptthread-Aufgaben. Bildgrößen werden erst nach Ende der Zeitmessung aus maximal sechs sichtbaren, fertig geladenen `IMG`-Elementen erfasst (höchstens 128 Elemente geprüft). Angezeigt werden natürliche Bildmaße und dargestellte CSS-Pixel; DPR steht im Bericht. CSS-Hintergrundbilder, versteckte und noch nicht geladene Bilder werden nicht erfasst. Es werden keine Bilder für die Diagnose nachgeladen oder dekodiert. Eine leere Stichprobe bedeutet nicht, dass die Poster klein sind.
+
+Die Bildgrößen-Stichprobe gehört zum aktuellen Bildschirminhalt, nicht zwingend zu den während der Messung erfassten Anfragen. Die Messung verursacht selbst etwas Aufwand; ausgeschaltete Diagnose ist deshalb ein zusätzlicher subjektiver Vergleich. Frame-Aufrufe sind keine direkte Messung der GPU-Bildrate. Es werden keine URLs, Tokens oder Medientitel im Ergebnis gespeichert und keine Berichte hochgeladen. Die Bedienelemente übernehmen beim Erscheinen keinen Fokus.
+
+### Bisheriger Befund
+
+Die Messungen mit 0.1.2/0.1.3 zeigten 13/9 Frame-Aufrufe pro Sekunde bei maximal 151/49 ms für abgeschlossene Bildanfragen. Ohne Plugin wurde subjektiv deutlich flüssigere Navigation gemeldet. Das grenzt den aktivierten Pluginpfad ein, trennt aber bisher CSS, Adapter und Messaufwand nicht. Die neuen Modi dienen dieser Trennung; sie sind keine weitere behauptete Performancekorrektur.
 
 ## Update 0.1.3.0: reduziertes Profil nach TV-Vergleich
 
@@ -20,11 +50,11 @@ Nach Aktualisierung auf **0.1.3.0** Server und TV-App neu starten, das Plugin wi
 - Im reduzierten Profil werden zusätzlich feste Blurwerte der Media-Bar-Schaltflächen, Pfeile und Inhaltsfläche sowie die animierte Logo-Unschärfe abgeschaltet.
 - Eine freiwillig aktivierte Diagnoseanzeige misst direkt auf dem TV. Ein Web Inspector oder Entwicklermodus ist dafür nicht erforderlich.
 
-**Messung:** Auf 0.1.2.0 aktualisieren, Server neu starten. Am PC unter Dashboard → Plugins → ElegantFin TV **„Diagnose auf dem Fernseher anzeigen“** einschalten und speichern. Die TV-App vollständig beenden und öffnen. Nach fünf Sekunden Vorlauf fordert die Anzeige zu 15 Sekunden Navigation auf. Danach das Ergebnis fotografieren. Für einen zweiten Vergleich App erneut starten und denselben Weg durch inzwischen geladene Poster wählen. Anschließend die Diagnoseoption wieder ausschalten und die App neu öffnen.
+**Historischer Ablauf bis 0.1.3.0:** Nach App-Start erfolgte eine automatische Messung mit fünf Sekunden Vorlauf. Ab 0.1.4.0 gilt der manuelle Ablauf oben.
 
 Der Bericht zeigt Chromium-Hauptversion, sichtbare Auflösung/DPR, Framepausen, lange Hauptthread-Aufgaben und aggregierte Bildanfragen nach Primary/Backdrop/Logo/Thumb. „Ohne Größenparameter“ bedeutet ab 0.1.3.0, dass in der Anfrage weder width/height, maxWidth/maxHeight noch fillWidth/fillHeight mit positivem Wert vorkommen; daraus allein folgt nicht, dass das tatsächlich ausgelieferte Bild groß ist. TTFB enthält Netzwerk- und Serveranteile. Null-/Nullbyte-Werte können Cache- oder CORS-bedingt sein. Zum Messende noch laufende Anfragen und die Bilddekodierung werden nicht erfasst.
 
-Keine URLs, Medientitel, IDs oder Zugangstoken werden im Bericht gespeichert oder angezeigt. Es gibt keinen automatischen Upload. Die Anzeige nimmt keinen Fokus entgegen und bleibt für ein Foto sichtbar. Sie startet standardmäßig nur nach ausdrücklichem Einschalten auf TV/webOS, einmal pro App-Ladevorgang; normale Desktopbrowser erhalten keine Anzeige. Bei Abschalten des Frontends werden Messung und Observer beendet.
+Keine URLs, Medientitel, IDs oder Zugangstoken werden im Bericht gespeichert oder angezeigt. Es gibt keinen automatischen Upload. Normale Desktopbrowser erhalten keine Diagnoseanzeige. Bei Abschalten des Frontends werden Messung und Observer beendet.
 
 Die Änderungen sind lokal geprüft, der tatsächliche Performancegewinn muss auf dem TV verglichen werden. Das Poster-Ladeverhalten von Jellyfin und die Bild-URLs der Media Bar werden durch dieses Update nicht verändert.
 
@@ -61,7 +91,7 @@ Das Repository und die Release-Downloads sind öffentlich erreichbar. Das Katalo
 
 1. Im Jellyfin-Dashboard die Serverversion **12.2.0** prüfen. Das Paket ist gegen diese API gebaut; andere Versionen sind nicht freigegeben.
 2. Eine zu Jellyfin 12.2 passende Version von [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) muss installiert sein. Bei einer Media-Bar-Installation kann sie bereits vorhanden sein. Das Plugin enthält diese Abhängigkeit nicht.
-3. Das Paket `artifacts/ElegantFinTV-0.1.3-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.3.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
+3. Das Paket `artifacts/ElegantFinTV-0.1.4-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.4.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
 4. Server starten. Im Dashboard unter Plugins **ElegantFin TV** öffnen. Standard: aktiviert, TV-Profil, Media-Bar-Adapter an, „Auch auf Desktop und Mobilgeräten“ aus.
 5. Die drei bisherigen CSS-Einbindungen können für den ersten TV-Test bestehen bleiben: Sie schließen `layout-tv` bereits aus. Die Dateien selbst müssen nicht bearbeitet werden. In der LG-App TV-Layout verwenden und die App vollständig schließen/neu starten, damit `index.html` neu angefordert wird.
 6. Das vorhandene Media-Bar-Plugin installiert lassen. ElegantFin TV lädt **keine zweite Media Bar** und ersetzt nicht deren Wiedergabe-, Favoriten-, Playlist- oder Trailerlogik.

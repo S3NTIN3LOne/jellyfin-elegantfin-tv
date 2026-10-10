@@ -8,7 +8,7 @@
             <h2>ElegantFin TV</h2>
             <p>Die Einstellungen werden beim nächsten vollständigen Laden der App wirksam.</p>
             <div class="checkboxContainer checkboxContainer-withDescription">
-                <label><input is="emby-checkbox" type="checkbox" id="eftvEnabled"><span>Theme aktivieren</span></label>
+                <label><input is="emby-checkbox" type="checkbox" id="eftvEnabled"><span>Plugin aktivieren (auch für Vergleichsmessungen erforderlich)</span></label>
             </div>
             <div class="selectContainer">
                 <label class="selectLabel" for="eftvPerformance">Darstellung</label>
@@ -27,7 +27,18 @@
             </div>
             <div class="checkboxContainer checkboxContainer-withDescription">
                 <label><input is="emby-checkbox" type="checkbox" id="eftvDiagnostics"><span>Diagnose auf dem Fernseher anzeigen</span></label>
-                <div class="fieldDescription">Nach dem nächsten App-Start: 5 Sekunden Vorlauf, dann 15 Sekunden zum Scrollen. Anschließend das Ergebnis fotografieren. Keine Übertragung von Messdaten; nach dem Test wieder ausschalten.</div>
+                <div class="fieldDescription">Erst die Bibliothek öffnen. Dann „Messung starten“ wählen oder die rote Farbtaste drücken: 3 Sekunden Vorlauf, 15 Sekunden Messung ohne Anzeige. Ergebnis fotografieren; erneute Messung für bereits geladene Poster möglich. Keine Übertragung von Messdaten.</div>
+            </div>
+            <div class="selectContainer">
+                <label class="selectLabel" for="eftvComparison">Vergleichsmodus (nur TV/webOS)</label>
+                <select is="emby-select" id="eftvComparison">
+                    <option value="normal">Normalbetrieb: vorhandene Einstellungen verwenden</option>
+                    <option value="reference">Referenz: ohne TV-Theme und ohne Fokusadapter</option>
+                    <option value="theme">Nur Theme: TV-CSS ohne Fokusadapter</option>
+                    <option value="adapter">Nur Adapter: Fokusadapter ohne TV-CSS</option>
+                    <option value="complete">Komplett: TV-CSS und Fokusadapter</option>
+                </select>
+                <div class="fieldDescription">Die eigentliche Media Bar bleibt unverändert. Vergleichsmodi übersteuern die Fokusadapter-Option auf dem TV und gelten auch bei ausgeschalteter Diagnose. Für den Vergleich ohne Messung nur die Diagnose ausschalten. Nach den Tests Normalbetrieb auswählen. App nach Änderungen vollständig neu starten.</div>
             </div>
             <p id="eftvSettingsStatus" role="status"></p>
             <button is="emby-button" type="submit" class="raised button-submit block"><span>Speichern</span></button>
@@ -45,6 +56,7 @@
                 field('eftvMediaBar').checked = config.MediaBar;
                 field('eftvAll').checked = config.ApplyToAllClients;
                 field('eftvDiagnostics').checked = config.ShowDiagnostics === true;
+                field('eftvComparison').value = ['reference', 'theme', 'adapter', 'complete'].includes(config.ComparisonMode) ? config.ComparisonMode : 'normal';
                 field('eftvPerformance').value = config.Performance === 'full' ? 'full' : 'balanced';
             }).catch(error);
         });
@@ -55,6 +67,7 @@
                 config.MediaBar = field('eftvMediaBar').checked;
                 config.ApplyToAllClients = field('eftvAll').checked;
                 config.ShowDiagnostics = field('eftvDiagnostics').checked;
+                config.ComparisonMode = field('eftvComparison').value;
                 config.Performance = field('eftvPerformance').value;
                 return ApiClient.updatePluginConfiguration(id, config);
             }).then(function () {

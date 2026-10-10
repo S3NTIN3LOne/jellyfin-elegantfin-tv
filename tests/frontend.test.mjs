@@ -319,12 +319,95 @@ test('opt-in TV diagnostics produces a report without taking focus or posting da
     await page.goto(base + '/web/index.html');
     await page.waitForSelector('#eftv-diagnostics');
     await page.locator('#outside').focus();
-    await page.clock.fastForward(5000);
+    await page.clock.fastForward(20000);
+    assert.match(await page.locator('#eftv-diagnostics').textContent(), /Bibliothek öffnen/);
+    await page.keyboard.press('F8');
+    await page.clock.fastForward(3000);
+    assert.equal(await page.locator('#eftv-diagnostics').isVisible(), false);
+    await page.clock.fastForward(100);
     await page.clock.fastForward(15000);
     await page.waitForFunction(() => document.getElementById('eftv-diagnostics').textContent.includes('Bitte Ergebnis fotografieren'));
     assert.equal(await page.evaluate(() => document.activeElement.id), 'outside');
     assert.equal(posts, 0);
+    assert.match(await page.locator('#eftv-diagnostics').textContent(), /Hauptthread-Aufgaben gesamt:/);
+    await page.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', {keyCode:403, bubbles:true})));
+    await page.clock.fastForward(3000);
+    await page.clock.fastForward(100);
+    await page.clock.fastForward(15000);
+    assert.match(await page.locator('#eftv-diagnostics').textContent(), /Lauf 2/);
     await page.evaluate(() => window.ElegantFinTv.dispose());
     assert.equal(await page.locator('#eftv-diagnostics').count(), 0);
     await page.close();
+});
+
+test('comparison matrix isolates CSS and adapter, independently of measurement', async () => {
+    for (const showDiagnostics of [false, true]) {
+        for (const [mode, theme, adapter] of [['reference',false,false],['theme',true,false],['adapter',false,true],['complete',true,true]]) {
+            const page = await browser.newPage();
+            const downloaded = [];
+            page.on('request', request => downloaded.push(request.url()));
+            await page.route('**/bootstrap.js', route => route.fulfill({contentType:'text/javascript', body:
+                'window.ElegantFinTvConfig=' + JSON.stringify({enabled:true, mediaBar:false, performance:'balanced', comparisonMode:mode, showDiagnostics}) + ';\n' + js}));
+            await page.goto(base + '/web/index.html');
+            await page.waitForFunction(() => window.ElegantFinTv?.status().active);
+            assert.deepEqual(await page.evaluate(() => window.ElegantFinTv.status().components), {mode, theme, adapter});
+            assert.equal(await page.locator('html').getAttribute('data-eftv') !== null, theme);
+            assert.equal(downloaded.some(url => url.includes('/tv.css')), theme);
+            if (!theme) assert.equal(downloaded.some(url => url.includes('/fonts/')), false);
+            assert.equal(await page.locator('#slides-container[data-eftv-adapted]').count(), adapter ? 1 : 0);
+            assert.equal(await page.locator('#eftv-diagnostics').count(), showDiagnostics ? 1 : 0);
+            if (showDiagnostics) assert.equal(await page.locator('#eftv-diagnostics').evaluate(el => getComputedStyle(el).pointerEvents), 'auto');
+            await page.close();
+        }
+    }
+});
+
+test('comparison settings do not change desktop behavior even with apply-to-all enabled', async () => {
+    const page = await browser.newPage();
+    await page.route('**/web/index.html', route => route.fulfill({contentType:'text/html', body:fixture.replace('class="layout-tv"','class="layout-desktop"')}));
+    await page.route('**/bootstrap.js', route => route.fulfill({contentType:'text/javascript', body:
+        'window.ElegantFinTvConfig={enabled:true,applyToAllClients:true,mediaBar:false,showDiagnostics:true,comparisonMode:"adapter"};\n' + js}));
+    await page.goto(base + '/web/index.html');
+    await page.waitForFunction(() => window.ElegantFinTv?.status().active);
+    assert.deepEqual(await page.evaluate(() => window.ElegantFinTv.status().components), {mode:'normal',theme:true,adapter:false});
+    assert.equal(await page.locator('#eftv-diagnostics').count(), 0);
+    await page.close();
+});
+
+test('manual start restores content focus; dispose cancels the countdown and red shortcut', async () => {
+    const page = await browser.newPage();
+    await page.clock.install();
+    await page.route('**/bootstrap.js', route => route.fulfill({contentType:'text/javascript', body:
+        'window.ElegantFinTvConfig={enabled:true,comparisonMode:"reference",showDiagnostics:true};\n' + js}));
+    await page.goto(base + '/web/index.html');
+    await page.waitForSelector('#eftv-diagnostics');
+    await page.locator('#outside').focus();
+    const start = page.getByRole('button', {name:'Messung starten'});
+    await start.focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'outside');
+    await page.evaluate(() => window.ElegantFinTv.dispose());
+    await page.clock.fastForward(20000);
+    await page.keyboard.press('F8');
+    assert.equal(await page.locator('#eftv-diagnostics').count(), 0);
+    assert.equal(await page.locator('style').count(), 1); // only the fixture style remains
+    await page.close();
+});
+
+test('dimension samples read existing IMG sizes only and do not retain identifying data', async () => {
+    const {page, context} = await open();
+    await page.route('**/Items/private-id/Images/Primary*', route => route.fulfill({contentType:'image/svg+xml',
+        body:'<svg xmlns="http://www.w3.org/2000/svg" width="600" height="900"></svg>'}));
+    const result = await page.evaluate(async () => {
+        const img = new Image();
+        img.src='/Items/private-id/Images/Primary?token=secret';
+        img.style.cssText='position:fixed;top:0;left:0;width:100px;height:150px';
+        document.body.appendChild(img);
+        await img.decode();
+        return await window.ElegantFinTv.diagnose(1);
+    });
+    assert.deepEqual(result.imageDimensions, [{kind:'primary',width:600,height:900,displayWidth:100,displayHeight:150}]);
+    assert.equal(result.imageRequestsObserved, 0);
+    assert.doesNotMatch(JSON.stringify(result), /private-id|secret|token=/);
+    await context.close();
 });

@@ -25,6 +25,8 @@ public sealed class AssetsController : ControllerBase
             applyToAllClients = configuration?.ApplyToAllClients == true,
             mediaBar = configuration?.MediaBar == true,
             showDiagnostics = configuration?.ShowDiagnostics == true,
+            comparisonMode = configuration?.ComparisonMode is "reference" or "theme" or "adapter" or "complete"
+                ? configuration.ComparisonMode : "normal",
             performance = configuration?.Performance == "full" ? "full" : "balanced",
             version = typeof(Plugin).Assembly.GetName().Version?.ToString()
         });

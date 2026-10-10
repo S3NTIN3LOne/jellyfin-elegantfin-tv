@@ -11,6 +11,7 @@ public sealed class PluginConfiguration : BasePluginConfiguration
     public bool ApplyToAllClients { get; set; }
     public bool MediaBar { get; set; } = true;
     public bool ShowDiagnostics { get; set; }
+    public string ComparisonMode { get; set; } = "normal";
     public string Performance { get; set; } = "balanced";
 }
 

@@ -16,9 +16,12 @@
     var frame = 0;
     var originals = new Map();
     var measurements = new Set();
-    var diagnosticsStarted = false;
     var diagnosticsPanel = null;
     var diagnosticsTimer = 0;
+    var diagnosticsStyle = null;
+    var diagnosticsBusy = false;
+    var previousFocus = null;
+    var measurementRun = 0;
     var controls = '.play-button,.detail-button,.favorite-button,.pause-button,.volume-toggle,.left-arrow,.right-arrow,.dot';
     var labels = {
         'play-button': 'Abspielen', 'detail-button': 'Details', 'favorite-button': 'Favorit',
@@ -149,7 +152,7 @@
     }
 
     function startMediaBar() {
-        if (bodyObserver || !config.mediaBar || !document.body) return;
+        if (bodyObserver || !document.body) return;
         bindBar(document.getElementById('slides-container'));
         bodyObserver = new MutationObserver(function (records) {
             if (bar && bar.isConnected) return;
@@ -170,6 +173,18 @@
         return root.classList.contains('layout-tv') || /web0s|webos|netcast/i.test(navigator.userAgent);
     }
 
+    function components() {
+        var mode = isTv() && ['reference', 'theme', 'adapter', 'complete'].includes(config.comparisonMode) ? config.comparisonMode : 'normal';
+        return { mode: mode, theme: mode !== 'reference' && mode !== 'adapter',
+            adapter: mode === 'adapter' || mode === 'complete' || (mode === 'normal' && config.mediaBar === true) };
+    }
+
+    function stopMediaBar() {
+        if (bodyObserver) bodyObserver.disconnect();
+        bodyObserver = null;
+        unbindBar();
+    }
+
     function reconcile() {
         if (disposed) return;
         var wanted = config.enabled !== false && (config.applyToAllClients === true || isTv());
@@ -177,28 +192,33 @@
             active = false;
             root.removeAttribute('data-eftv');
             root.removeAttribute('data-eftv-performance');
-            if (bodyObserver) bodyObserver.disconnect();
-            bodyObserver = null;
-            unbindBar();
+            stopMediaBar();
             stopDiagnostics();
             if (link) link.disabled = true;
             return;
         }
-        if (!link) {
+        var parts = components();
+        if (parts.theme && !link) {
             link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = new URL('tv.css?v=' + encodeURIComponent(config.version || '0.1.3'), assetBase).href;
+            link.href = new URL('tv.css?v=' + encodeURIComponent(config.version || '0.1.4'), assetBase).href;
             link.onload = function () { loaded = true; reconcile(); };
             link.onerror = function () { console.warn('ElegantFin TV: stylesheet could not be loaded.'); };
             document.head.appendChild(link);
         }
-        link.disabled = false;
-        if (!loaded) return;
+        if (link) link.disabled = !parts.theme;
+        if (parts.theme && !loaded) return;
         active = true;
-        root.setAttribute('data-eftv', '');
-        root.setAttribute('data-eftv-performance', config.performance === 'full' ? 'full' : 'balanced');
-        startMediaBar();
+        if (parts.theme) {
+            root.setAttribute('data-eftv', '');
+            root.setAttribute('data-eftv-performance', config.performance === 'full' ? 'full' : 'balanced');
+        } else {
+            root.removeAttribute('data-eftv');
+            root.removeAttribute('data-eftv-performance');
+        }
+        if (parts.adapter) startMediaBar(); else stopMediaBar();
         if (config.showDiagnostics === true && isTv()) startDiagnostics();
+        else stopDiagnostics();
     }
 
     var layoutObserver = new MutationObserver(reconcile);
@@ -292,7 +312,7 @@
                     cancelled: cancelled === true, startedAt: startedAt,
                     browserEngine: (navigator.userAgent.match(/Chrome\/(\d+)/) || [])[1] || 'unknown',
                     viewport: { width: window.innerWidth, height: window.innerHeight, pixelRatio: window.devicePixelRatio },
-                    active: active, profile: root.getAttribute('data-eftv-performance'),
+                    active: active, profile: root.getAttribute('data-eftv-performance'), components: components(),
                     mediaBarFound: !!bar, seconds: Math.round(duration / 100) / 10,
                     frameSamplesPerSecond: wasHidden ? null : Math.round(frames * 1000 / duration),
                     longestFrameMs: wasHidden ? null : Math.round(longestFrame),
@@ -302,6 +322,7 @@
                     imageRequestsObserved: resources.length,
                     slowestImageRequestMs: resources.length ? Math.round(Math.max.apply(null, resources.map(function (r) { return r.duration; }))) : null,
                     images: categories,
+                    imageDimensions: cancelled ? [] : sampleImageDimensions(),
                     note: 'Aggregate Resource Timing only. In-flight requests at the end are excluded. Cache/CORS may hide sizes/timings. TTFB includes network and server time; image decode is not measured. No URLs or tokens are returned.'
                 });
             }
@@ -311,51 +332,134 @@
         });
     }
 
+    // Read existing decoded IMG dimensions only, after frame timing stops.
+    // No new Image(), decode(), fetch or background-image downloads for sampling.
+    function sampleImageDimensions() {
+        var samples = [];
+        var images = document.images;
+        for (var i = 0; i < images.length && i < 128 && samples.length < 6; i++) {
+            var img = images[i];
+            var kind = /\/images\/(primary|backdrop|thumb|logo)(\/|\?|$)/i.exec(img.currentSrc || img.src);
+            if (!kind || !img.complete || !img.naturalWidth || img.closest('[hidden],[inert],[aria-hidden="true"]')) continue;
+            var rect = img.getBoundingClientRect();
+            if (!rect.width || !rect.height || rect.bottom <= 0 || rect.right <= 0 || rect.top >= innerHeight || rect.left >= innerWidth) continue;
+            if (getComputedStyle(img).visibility === 'hidden') continue;
+            samples.push({kind: kind[1].toLowerCase(), width: img.naturalWidth, height: img.naturalHeight,
+                displayWidth: Math.round(rect.width), displayHeight: Math.round(rect.height)});
+        }
+        return samples;
+    }
+
     function stopDiagnostics() {
         clearTimeout(diagnosticsTimer);
         diagnosticsTimer = 0;
         measurements.forEach(function (cancel) { cancel(); });
+        document.removeEventListener('keydown', onDiagnosticsKey, true);
+        document.removeEventListener('focusin', rememberFocus, true);
+        if (diagnosticsStyle) diagnosticsStyle.remove();
+        diagnosticsStyle = null;
         if (diagnosticsPanel) diagnosticsPanel.remove();
         diagnosticsPanel = null;
+        diagnosticsBusy = false;
+        previousFocus = null;
     }
 
     function startDiagnostics() {
-        if (diagnosticsStarted || !document.body) return;
-        diagnosticsStarted = true;
+        if (diagnosticsPanel || !document.body) return;
+        diagnosticsStyle = document.createElement('style');
+        diagnosticsStyle.textContent = '#eftv-diagnostics{position:fixed;z-index:2147483647;inset:1rem 1rem auto auto;max-width:85vw;max-height:90vh;overflow:auto;padding:1rem;background:#111827;color:white;border:2px solid #a5b4fc;border-radius:.5rem;font:500 1rem/1.4 sans-serif;white-space:pre-line;pointer-events:auto}#eftv-diagnostics[hidden]{display:none!important}#eftv-diagnostics button{font:inherit;color:white;background:#29364f;border:2px solid #a5b4fc;padding:.4rem .8rem;margin:.4rem}#eftv-diagnostics button:focus{outline:3px solid white}';
+        document.head.appendChild(diagnosticsStyle);
         var panel = document.createElement('div');
         panel.id = 'eftv-diagnostics';
         panel.setAttribute('role', 'status');
-        panel.textContent = 'ElegantFin TV: Diagnose startet in 5 Sekunden.\nDanach 15 Sekunden durch die Poster navigieren.';
         diagnosticsPanel = panel;
         document.body.appendChild(panel);
+        document.addEventListener('keydown', onDiagnosticsKey, true);
+        document.addEventListener('focusin', rememberFocus, true);
+        previousFocus = document.activeElement;
+        showDiagnosticText('ElegantFin TV · ' + components().mode + '\nBibliothek öffnen, dann Messung starten (rote Farbtaste).');
+    }
+
+    function rememberFocus(event) {
+        if (diagnosticsPanel && !diagnosticsPanel.contains(event.target)) previousFocus = event.target;
+    }
+
+    function restoreFocus() {
+        if (diagnosticsPanel && diagnosticsPanel.contains(document.activeElement) && previousFocus && previousFocus.isConnected) {
+            previousFocus.focus({ preventScroll: true });
+        }
+    }
+
+    function showDiagnosticText(text) {
+        var panel = diagnosticsPanel;
+        restoreFocus();
+        panel.textContent = text + '\n';
+        panel.hidden = false;
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'emby-button show-focus';
+        button.textContent = 'Messung starten';
+        button.addEventListener('click', beginMeasurement);
+        panel.appendChild(button);
+        var hide = document.createElement('button');
+        hide.type = 'button'; hide.className = 'emby-button show-focus'; hide.textContent = 'Ausblenden';
+        hide.addEventListener('click', function () { restoreFocus(); panel.hidden = true; });
+        panel.appendChild(hide);
+    }
+
+    function onDiagnosticsKey(event) {
+        if (event.keyCode !== 403 && event.key !== 'ColorF0Red' && event.key !== 'F8') return;
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (!event.repeat && !diagnosticsBusy) beginMeasurement();
+    }
+
+    function beginMeasurement() {
+        if (!diagnosticsPanel || diagnosticsBusy) return;
+        diagnosticsBusy = true;
+        var panel = diagnosticsPanel;
+        restoreFocus();
+        panel.hidden = false;
+        panel.textContent = 'Start in 3 Sekunden. Danach 15 Sekunden navigieren.\nWährend der Messung wird die Anzeige ausgeblendet.';
         diagnosticsTimer = setTimeout(function () {
             diagnosticsTimer = 0;
-            panel.textContent = 'ElegantFin TV: Jetzt 15 Sekunden navigieren.\nMessung läuft lokal auf dem Fernseher.';
+            panel.hidden = true;
+            // Allow the display:none update to settle before the timing window.
+            diagnosticsTimer = setTimeout(function () {
+            diagnosticsTimer = 0;
             diagnose(15).then(function (result) {
                 if (result.cancelled || diagnosticsPanel !== panel) return;
+                diagnosticsBusy = false;
+                measurementRun++;
                 function number(value) { return value === null ? 'n/v' : value; }
                 var rows = [
-                    'ElegantFin TV ' + (config.version || '0.1.3') + ' · ' + result.profile + ' · Chrome ' + result.browserEngine,
+                    'ElegantFin TV ' + (config.version || '0.1.4') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
+                    'Theme: ' + result.components.theme + ' · Adapter: ' + result.components.adapter + ' · Profil: ' + (result.profile || 'Standard') + ' · Chrome ' + result.browserEngine,
                     result.viewport.width + '×' + result.viewport.height + ' · DPR ' + result.viewport.pixelRatio + ' · ' + result.startedAt,
                     'Frames/s: ' + number(result.frameSamplesPerSecond) + ' · längste Pause: ' + number(result.longestFrameMs) + ' ms',
                     'Framepausen >50 ms: ' + number(result.framesOver50Ms) + ' · lange Hauptthread-Aufgaben: ' + number(result.longTaskCount),
+                    'Hauptthread-Aufgaben gesamt: ' + number(result.longTaskTotalMs) + ' ms · Messdauer: ' + result.seconds + ' s',
                     'Bildanfragen: ' + result.imageRequestsObserved + ' · langsamste: ' + number(result.slowestImageRequestMs) + ' ms'
                 ];
                 Object.keys(result.images).forEach(function (kind) {
                     var g = result.images[kind];
                     rows.push(kind + ': ' + g.count + ' · ohne Größenparameter: ' + g.uncapped + ' · max. ' + g.maxMs + ' ms · TTFB ' + number(g.maxTtfbMs) + ' ms · ' + Math.round(g.encodedBytes / 1024) + ' KiB');
                 });
+                result.imageDimensions.forEach(function (s) {
+                    rows.push(s.kind + ': Bild ' + s.width + '×' + s.height + ' → Anzeige ' + s.displayWidth + '×' + s.displayHeight + ' CSS-px');
+                });
+                rows.push('Bildgrößen: ' + result.imageDimensions.length + ' IMG-Stichproben; CSS-Hintergrundbilder nicht erfasst.');
                 rows.push('Bitte Ergebnis fotografieren. Keine Messdaten wurden versendet.');
                 rows.push('Cache/CORS können Werte verdecken. n/v = nicht verfügbar.');
-                panel.textContent = rows.join('\n');
+                showDiagnosticText(rows.join('\n'));
             });
-        }, 5000);
+            }, 100);
+        }, 3000);
     }
 
     window.ElegantFinTv = {
-        version: config.version || '0.1.3',
+        version: config.version || '0.1.4',
         diagnose: diagnose,
-        status: function () { return { active: active, tv: isTv(), mediaBarFound: !!bar, profile: root.getAttribute('data-eftv-performance') }; },
+        status: function () { return { active: active, tv: isTv(), mediaBarFound: !!bar, profile: root.getAttribute('data-eftv-performance'), components: components() }; },
         dispose: function () {
             config.enabled = false;
             reconcile();
