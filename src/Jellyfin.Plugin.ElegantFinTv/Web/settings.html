@@ -25,6 +25,10 @@
                 <label><input is="emby-checkbox" type="checkbox" id="eftvAll"><span>Auch auf Desktop und Mobilgeräten aktivieren</span></label>
                 <div class="fieldDescription">Standardmäßig nur webOS und TV-Layout. Bei Aktivierung bestehende ElegantFin-CSS-Einbindungen entfernen, um doppelte Themes zu vermeiden.</div>
             </div>
+            <div class="checkboxContainer checkboxContainer-withDescription">
+                <label><input is="emby-checkbox" type="checkbox" id="eftvDiagnostics"><span>Diagnose auf dem Fernseher anzeigen</span></label>
+                <div class="fieldDescription">Nach dem nächsten App-Start: 5 Sekunden Vorlauf, dann 15 Sekunden zum Scrollen. Anschließend das Ergebnis fotografieren. Keine Übertragung von Messdaten; nach dem Test wieder ausschalten.</div>
+            </div>
             <p id="eftvSettingsStatus" role="status"></p>
             <button is="emby-button" type="submit" class="raised button-submit block"><span>Speichern</span></button>
         </form>
@@ -40,6 +44,7 @@
                 field('eftvEnabled').checked = config.Enabled;
                 field('eftvMediaBar').checked = config.MediaBar;
                 field('eftvAll').checked = config.ApplyToAllClients;
+                field('eftvDiagnostics').checked = config.ShowDiagnostics === true;
                 field('eftvPerformance').value = config.Performance === 'full' ? 'full' : 'balanced';
             }).catch(error);
         });
@@ -49,6 +54,7 @@
                 config.Enabled = field('eftvEnabled').checked;
                 config.MediaBar = field('eftvMediaBar').checked;
                 config.ApplyToAllClients = field('eftvAll').checked;
+                config.ShowDiagnostics = field('eftvDiagnostics').checked;
                 config.Performance = field('eftvPerformance').value;
                 return ApiClient.updatePluginConfiguration(id, config);
             }).then(function () {

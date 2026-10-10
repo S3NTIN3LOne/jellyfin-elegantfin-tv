@@ -1,5 +1,19 @@
 # Analyse und Grenzen
 
+## Weitere Untersuchung und Update 0.1.2.0
+
+Das bereitgestellte Serverlog bestätigt den Start von ElegantFin TV 0.1.1.0 mit `balanced`, Media Bar 3.0.0.2 und File Transformation 3.0.0.1. Die Registrierung unter `index.html` ist erfolgreich. Das Log endet kurz nach dem Verbindungsaufbau und enthält keine einzelnen Bildanfragen mit Dauer. Der Fehler im ScheduledTasks-WebSocket betrifft eine bereits freigegebene CancellationTokenSource; er belegt keine Ursache für langsames Scrollen oder Poster. Auch die `/wwwroot`-Warnung allein erklärt die inzwischen funktionierende Theme-Anzeige nicht. Das private Log wird nicht ins Repository aufgenommen.
+
+Die zusätzlich bereitgestellten lokalen Media-Bar-Quellen zeigen:
+
+- `SlideCreator.buildImageUrl` setzt Tag und Qualität, aber keine Pixelgrößenbegrenzung. `createSlideForItem` fordert Backdrop, Logo und Poster eager an. Welche Bildgrößen tatsächlich geliefert werden, ist damit nicht gemessen.
+- `preloadAdjacentSlides` lädt den nächsten Slide auch bei `preloadCount = 0`; diese Einstellung verhindert das Vorladen in diesem Stand nicht.
+- Eigene feste Blurwerte und die `.logo.animate`-Animation bleiben vom bisherigen Theme-Variablenprofil unberührt.
+- Beim Verlassen der Startseite stoppt die Sichtbarkeitssteuerung den Slideshow-Timer, räumt Spieler und Slides auf. Eine Behauptung, Trailer liefen sicher in der Filmbibliothek weiter, wäre deshalb nicht belegt.
+- File Transformation interceptiert hier `/web/`-Antworten, deren relativer Pfad registriert ist. Die regulären `/Items/.../Images/...`-Anfragen laufen nicht durch diese Transformationskette.
+
+Update 0.1.2.0 korrigiert den durch überlagerte Fokusregeln möglichen doppelten Kartenrahmen und reduziert die zusätzlich identifizierten Media-Bar-Effekte. Es ergänzt eine standardmäßig ausgeschaltete lokale Messanzeige für die offizielle TV-App. Die Diagnose verwendet Resource/Long-Task-Observer, falls vorhanden, und zeigt nur aggregierte Werte; sie übermittelt nichts und benötigt keinen Entwicklermodus. Die direkten Bildladeanforderungen und die separat gepflegten Pluginquellen wurden nicht geändert. Weitere Optimierungen sollen anhand der Gerätemessung erfolgen.
+
 ## Korrektur 0.1.1.0: Media-Bar-Konflikt
 
 Die erste Version registrierte `(^|[/\\])index\.html$`, die Media Bar hingegen `index.html`. File Transformation führt pro Pfad nur eine passende Verarbeitungskette aus und bevorzugt einen exakten Schlüssel. Deshalb wurde bei gleichzeitig registrierter Media Bar unser Einfügen des Bootstrap-Skripts übersprungen. Dieser Integrationsfehler war von den ersten Einzeltests nicht abgedeckt.

@@ -207,3 +207,82 @@ test('unknown Media Bar slide conventions are left focusable', async () => {
     assert.equal(await page.locator('.slide[inert]').count(), 0);
     await context.close();
 });
+
+test('poster cards have one outline; standalone buttons keep a visible focus indicator', async () => {
+    const {page, context} = await open();
+    await page.evaluate(() => {
+        const card = document.createElement('div');
+        card.id = 'poster-test';
+        card.className = 'card show-focus';
+        card.tabIndex = 0;
+        card.innerHTML = '<div class="cardScalable" style="width:150px;height:220px"><a href="#film" class="cardImageContainer cardContent" style="display:block;width:150px;height:220px">Poster</a><button>Action</button></div>';
+        document.body.appendChild(card);
+    });
+    await page.locator('#poster-test').focus();
+    assert.equal(await page.locator('#poster-test').evaluate(el => getComputedStyle(el).outlineStyle), 'none');
+    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
+    await page.locator('#poster-test a').focus();
+    assert.equal(await page.locator('#poster-test a').evaluate(el => getComputedStyle(el).outlineStyle), 'none');
+    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
+    await page.locator('#outside').focus();
+    assert.equal(await page.locator('#outside').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
+    await context.close();
+});
+
+test('balanced profile overrides Media Bar literal blur and animated logos', async () => {
+    const {page, context} = await open();
+    await page.addStyleTag({ content: '#slides-container .detail-button {backdrop-filter:blur(6px)} #slides-container .logo.animate {animation:foreignBlur 10s infinite} @keyframes foreignBlur{to{filter:blur(8px)}}' });
+    await page.evaluate(() => {
+        const logo = document.createElement('div'); logo.className = 'logo animate';
+        document.getElementById('one').appendChild(logo);
+    });
+    assert.equal(await page.locator('#one .detail-button').evaluate(el => getComputedStyle(el).backdropFilter), 'none');
+    assert.equal(await page.locator('#one .logo').evaluate(el => getComputedStyle(el).animationName), 'none');
+    await context.close();
+});
+
+test('diagnosis groups image timing without retaining URLs or tokens', async () => {
+    const {page, context} = await open();
+    await page.route('**/Items/private-id/Images/Primary*', route => route.fulfill({
+        contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="red"/></svg>'
+    }));
+    const result = await page.evaluate(async () => {
+        const pending = window.ElegantFinTv.diagnose(1);
+        const image = new Image();
+        image.src = '/Items/private-id/Images/Primary?api_key=private-token';
+        document.body.appendChild(image);
+        return await pending;
+    });
+    assert.equal(result.cancelled, false);
+    assert.equal(result.images.primary.count, 1);
+    assert.equal(result.images.primary.uncapped, 1);
+    assert.ok(result.images.primary.encodedBytes > 0);
+    assert.doesNotMatch(JSON.stringify(result), /private-id|private-token|api_key|127\.0\.0\.1/);
+    await page.evaluate(async () => {
+        const pending = window.ElegantFinTv.diagnose(30);
+        window.ElegantFinTv.dispose();
+        window.cancelledReport = await pending;
+    });
+    assert.equal(await page.evaluate(() => window.cancelledReport.cancelled), true);
+    await context.close();
+});
+
+test('opt-in TV diagnostics produces a report without taking focus or posting data', async () => {
+    const page = await browser.newPage();
+    await page.clock.install();
+    await page.route('**/bootstrap.js', route => route.fulfill({ contentType: 'text/javascript',
+        body: 'window.ElegantFinTvConfig={enabled:true,mediaBar:true,performance:"balanced",showDiagnostics:true};\n' + js }));
+    let posts = 0;
+    page.on('request', request => { if (request.method() === 'POST') posts++; });
+    await page.goto(base + '/web/index.html');
+    await page.waitForSelector('#eftv-diagnostics');
+    await page.locator('#outside').focus();
+    await page.clock.fastForward(5000);
+    await page.clock.fastForward(15000);
+    await page.waitForFunction(() => document.getElementById('eftv-diagnostics').textContent.includes('Bitte Ergebnis fotografieren'));
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'outside');
+    assert.equal(posts, 0);
+    await page.evaluate(() => window.ElegantFinTv.dispose());
+    assert.equal(await page.locator('#eftv-diagnostics').count(), 0);
+    await page.close();
+});

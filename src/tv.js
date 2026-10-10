@@ -15,6 +15,10 @@
     var bar = null;
     var frame = 0;
     var originals = new Map();
+    var measurements = new Set();
+    var diagnosticsStarted = false;
+    var diagnosticsPanel = null;
+    var diagnosticsTimer = 0;
     var controls = '.play-button,.detail-button,.favorite-button,.pause-button,.volume-toggle,.left-arrow,.right-arrow,.dot';
     var labels = {
         'play-button': 'Abspielen', 'detail-button': 'Details', 'favorite-button': 'Favorit',
@@ -176,13 +180,14 @@
             if (bodyObserver) bodyObserver.disconnect();
             bodyObserver = null;
             unbindBar();
+            stopDiagnostics();
             if (link) link.disabled = true;
             return;
         }
         if (!link) {
             link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = new URL('tv.css?v=' + encodeURIComponent(config.version || '0.1.1'), assetBase).href;
+            link.href = new URL('tv.css?v=' + encodeURIComponent(config.version || '0.1.2'), assetBase).href;
             link.onload = function () { loaded = true; reconcile(); };
             link.onerror = function () { console.warn('ElegantFin TV: stylesheet could not be loaded.'); };
             document.head.appendChild(link);
@@ -193,6 +198,7 @@
         root.setAttribute('data-eftv', '');
         root.setAttribute('data-eftv-performance', config.performance === 'full' ? 'full' : 'balanced');
         startMediaBar();
+        if (config.showDiagnostics === true && isTv()) startDiagnostics();
     }
 
     var layoutObserver = new MutationObserver(reconcile);
@@ -201,13 +207,54 @@
     function diagnose(seconds) {
         seconds = Math.min(30, Math.max(1, Number(seconds) || 10));
         var start = performance.now();
+        var startedAt = new Date().toISOString();
         var frames = 0;
         var longestFrame = 0;
+        var framesOver50Ms = 0;
         var last = start;
         var token;
         var wasHidden = document.hidden;
+        var resources = [];
+        var resourceObserver = null;
+        var taskObserver = null;
+        var longTasks = 0;
+        var longTaskMs = 0;
+        var categories = {};
+        function collect(entries) {
+            entries.forEach(function (entry) {
+                if (entry.startTime < start) return;
+                var kind = /\/images\/(primary|backdrop|thumb|logo)(\/|\?|$)/i.exec(entry.name);
+                if (!kind) return;
+                var capped = false;
+                try {
+                    new URL(entry.name).searchParams.forEach(function (value, key) {
+                        if (/^(maxwidth|maxheight|width|height)$/i.test(key) && Number(value) > 0) capped = true;
+                    });
+                } catch (_) { /* Aggregate timing remains useful for an unparseable URL. */ }
+                // Keep only numbers/types, never URLs, IDs, query strings or tokens.
+                resources.push({ kind: kind[1].toLowerCase(), duration: entry.duration,
+                    ttfb: entry.responseStart > 0 ? entry.responseStart - entry.requestStart : null,
+                    bytes: entry.encodedBodySize || 0, capped: capped });
+            });
+        }
+        if (window.PerformanceObserver) {
+            try {
+                resourceObserver = new PerformanceObserver(function (list) { collect(list.getEntries()); });
+                resourceObserver.observe({ entryTypes: ['resource'] });
+            } catch (_) { resourceObserver = null; }
+            try {
+                if (PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.includes('longtask')) {
+                    taskObserver = new PerformanceObserver(function (list) {
+                        list.getEntries().forEach(function (entry) { if (entry.startTime >= start) { longTasks++; longTaskMs += entry.duration; } });
+                    });
+                    taskObserver.observe({ entryTypes: ['longtask'] });
+                }
+            } catch (_) { taskObserver = null; }
+        }
         function tick(now) {
-            longestFrame = Math.max(longestFrame, now - last);
+            var gap = now - last;
+            longestFrame = Math.max(longestFrame, gap);
+            if (gap > 50) framesOver50Ms++;
             last = now;
             frames++;
             token = requestAnimationFrame(tick);
@@ -216,28 +263,97 @@
         document.addEventListener('visibilitychange', onVisibility);
         token = requestAnimationFrame(tick);
         return new Promise(function (resolve) {
-            setTimeout(function () {
+            var finished = false;
+            var timer;
+            function finish(cancelled) {
+                if (finished) return;
+                finished = true;
+                clearTimeout(timer);
                 cancelAnimationFrame(token);
+                measurements.delete(cancel);
                 document.removeEventListener('visibilitychange', onVisibility);
-                var resources = performance.getEntriesByType('resource').filter(function (entry) {
-                    return entry.startTime >= start && /\/images\/(primary|backdrop|thumb|logo)(\/|\?|$)/i.test(entry.name);
+                if (resourceObserver) { collect(resourceObserver.takeRecords()); resourceObserver.disconnect(); }
+                else collect(performance.getEntriesByType('resource'));
+                if (taskObserver) {
+                    taskObserver.takeRecords().forEach(function (entry) { if (entry.startTime >= start) { longTasks++; longTaskMs += entry.duration; } });
+                    taskObserver.disconnect();
+                }
+                resources.forEach(function (r) {
+                    if (!categories[r.kind]) categories[r.kind] = { count: 0, uncapped: 0, maxMs: 0, maxTtfbMs: null, encodedBytes: 0 };
+                    var group = categories[r.kind];
+                    group.count++;
+                    if (!r.capped) group.uncapped++;
+                    group.maxMs = Math.max(group.maxMs, Math.round(r.duration));
+                    if (r.ttfb !== null) group.maxTtfbMs = Math.max(group.maxTtfbMs || 0, Math.round(r.ttfb));
+                    group.encodedBytes += r.bytes;
                 });
                 var duration = performance.now() - start;
                 resolve({
+                    cancelled: cancelled === true, startedAt: startedAt,
+                    browserEngine: (navigator.userAgent.match(/Chrome\/(\d+)/) || [])[1] || 'unknown',
+                    viewport: { width: window.innerWidth, height: window.innerHeight, pixelRatio: window.devicePixelRatio },
                     active: active, profile: root.getAttribute('data-eftv-performance'),
                     mediaBarFound: !!bar, seconds: Math.round(duration / 100) / 10,
                     frameSamplesPerSecond: wasHidden ? null : Math.round(frames * 1000 / duration),
                     longestFrameMs: wasHidden ? null : Math.round(longestFrame),
+                    framesOver50Ms: wasHidden ? null : framesOver50Ms,
+                    longTaskCount: taskObserver ? longTasks : null,
+                    longTaskTotalMs: taskObserver ? Math.round(longTaskMs) : null,
                     imageRequestsObserved: resources.length,
                     slowestImageRequestMs: resources.length ? Math.round(Math.max.apply(null, resources.map(function (r) { return r.duration; }))) : null,
-                    note: 'Aggregate Resource Timing only; buffer/cache/CORS can limit coverage. This does not isolate server time or image decode. No URLs or tokens are returned.'
+                    images: categories,
+                    note: 'Aggregate Resource Timing only. In-flight requests at the end are excluded. Cache/CORS may hide sizes/timings. TTFB includes network and server time; image decode is not measured. No URLs or tokens are returned.'
                 });
-            }, seconds * 1000);
+            }
+            function cancel() { finish(true); }
+            measurements.add(cancel);
+            timer = setTimeout(function () { finish(false); }, seconds * 1000);
         });
     }
 
+    function stopDiagnostics() {
+        clearTimeout(diagnosticsTimer);
+        diagnosticsTimer = 0;
+        measurements.forEach(function (cancel) { cancel(); });
+        if (diagnosticsPanel) diagnosticsPanel.remove();
+        diagnosticsPanel = null;
+    }
+
+    function startDiagnostics() {
+        if (diagnosticsStarted || !document.body) return;
+        diagnosticsStarted = true;
+        var panel = document.createElement('div');
+        panel.id = 'eftv-diagnostics';
+        panel.setAttribute('role', 'status');
+        panel.textContent = 'ElegantFin TV: Diagnose startet in 5 Sekunden.\nDanach 15 Sekunden durch die Poster navigieren.';
+        diagnosticsPanel = panel;
+        document.body.appendChild(panel);
+        diagnosticsTimer = setTimeout(function () {
+            diagnosticsTimer = 0;
+            panel.textContent = 'ElegantFin TV: Jetzt 15 Sekunden navigieren.\nMessung läuft lokal auf dem Fernseher.';
+            diagnose(15).then(function (result) {
+                if (result.cancelled || diagnosticsPanel !== panel) return;
+                function number(value) { return value === null ? 'n/v' : value; }
+                var rows = [
+                    'ElegantFin TV ' + (config.version || '0.1.2') + ' · ' + result.profile + ' · Chrome ' + result.browserEngine,
+                    result.viewport.width + '×' + result.viewport.height + ' · DPR ' + result.viewport.pixelRatio + ' · ' + result.startedAt,
+                    'Frames/s: ' + number(result.frameSamplesPerSecond) + ' · längste Pause: ' + number(result.longestFrameMs) + ' ms',
+                    'Framepausen >50 ms: ' + number(result.framesOver50Ms) + ' · lange JS-Aufgaben: ' + number(result.longTaskCount),
+                    'Bildanfragen: ' + result.imageRequestsObserved + ' · langsamste: ' + number(result.slowestImageRequestMs) + ' ms'
+                ];
+                Object.keys(result.images).forEach(function (kind) {
+                    var g = result.images[kind];
+                    rows.push(kind + ': ' + g.count + ' · ohne Größenlimit: ' + g.uncapped + ' · max. ' + g.maxMs + ' ms · TTFB ' + number(g.maxTtfbMs) + ' ms · ' + Math.round(g.encodedBytes / 1024) + ' KiB');
+                });
+                rows.push('Bitte Ergebnis fotografieren. Keine Messdaten wurden versendet.');
+                rows.push('Cache/CORS können Werte verdecken. n/v = nicht verfügbar.');
+                panel.textContent = rows.join('\n');
+            });
+        }, 5000);
+    }
+
     window.ElegantFinTv = {
-        version: config.version || '0.1.1',
+        version: config.version || '0.1.2',
         diagnose: diagnose,
         status: function () { return { active: active, tv: isTv(), mediaBarFound: !!bar, profile: root.getAttribute('data-eftv-performance') }; },
         dispose: function () {

@@ -4,6 +4,20 @@ Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Üb
 
 **Status: lokal gebaut und automatisiert geprüft; noch nicht am LG C4 oder mit der privat angepassten Media Bar getestet.** Ein Geschwindigkeitsgewinn ist nicht gemessen. Poster-Anfragen werden nicht verändert; dieses Paket behebt keinen nachgewiesenen Server- oder Netzwerkengpass.
 
+## Update 0.1.2.0 und Diagnose ohne Entwicklermodus
+
+- Poster erhalten eine Kontur am Vorschaubild statt zusätzlicher Konturen am umgebenden Link/Kartencontainer. Separate Aktionsbuttons bleiben erkennbar fokussiert.
+- Im reduzierten Profil werden zusätzlich feste Blurwerte der Media-Bar-Schaltflächen, Pfeile und Inhaltsfläche sowie die animierte Logo-Unschärfe abgeschaltet.
+- Eine freiwillig aktivierte Diagnoseanzeige misst direkt auf dem TV. Ein Web Inspector oder Entwicklermodus ist dafür nicht erforderlich.
+
+**Messung:** Auf 0.1.2.0 aktualisieren, Server neu starten. Am PC unter Dashboard → Plugins → ElegantFin TV **„Diagnose auf dem Fernseher anzeigen“** einschalten und speichern. Die TV-App vollständig beenden und öffnen. Nach fünf Sekunden Vorlauf fordert die Anzeige zu 15 Sekunden Navigation auf. Danach das Ergebnis fotografieren. Für einen zweiten Vergleich App erneut starten und denselben Weg durch inzwischen geladene Poster wählen. Anschließend die Diagnoseoption wieder ausschalten und die App neu öffnen.
+
+Der Bericht zeigt Chromium-Hauptversion, sichtbare Auflösung/DPR, Framepausen, lange JavaScript-Aufgaben und aggregierte Bildanfragen nach Primary/Backdrop/Logo/Thumb. „Ohne Größenlimit“ bedeutet, dass in der Anfrage weder width/height noch maxWidth/maxHeight mit positivem Wert vorkommen; daraus allein folgt nicht, dass das tatsächlich ausgelieferte Bild groß ist. TTFB enthält Netzwerk- und Serveranteile. Null-/Nullbyte-Werte können Cache- oder CORS-bedingt sein. Zum Messende noch laufende Anfragen und die Bilddekodierung werden nicht erfasst.
+
+Keine URLs, Medientitel, IDs oder Zugangstoken werden im Bericht gespeichert oder angezeigt. Es gibt keinen automatischen Upload. Die Anzeige nimmt keinen Fokus entgegen und bleibt für ein Foto sichtbar. Sie startet standardmäßig nur nach ausdrücklichem Einschalten auf TV/webOS, einmal pro App-Ladevorgang; normale Desktopbrowser erhalten keine Anzeige. Bei Abschalten des Frontends werden Messung und Observer beendet.
+
+Die Änderungen sind lokal geprüft, der tatsächliche Performancegewinn muss auf dem TV verglichen werden. Das Poster-Ladeverhalten von Jellyfin und die Bild-URLs der Media Bar werden durch dieses Update nicht verändert.
+
 ## Update 0.1.1.0
 
 Behebt eine übersprungene Theme-Einbindung bei gleichzeitig installierter Media Bar. Version 0.1.0.0 registrierte eine eigene Regex-Verarbeitungskette; File Transformation bevorzugt jedoch die von Media Bar unter `index.html` registrierte Kette. Beide Plugins verwenden jetzt denselben Schlüssel. Der Konflikt wurde mit der unveränderten Upstream-Verarbeitungsklasse reproduziert und die Korrektur mit beiden Registrierungsreihenfolgen geprüft.
@@ -37,7 +51,7 @@ Das Repository und die Release-Downloads sind öffentlich erreichbar. Das Katalo
 
 1. Im Jellyfin-Dashboard die Serverversion **12.2.0** prüfen. Das Paket ist gegen diese API gebaut; andere Versionen sind nicht freigegeben.
 2. Eine zu Jellyfin 12.2 passende Version von [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) muss installiert sein. Bei einer Media-Bar-Installation kann sie bereits vorhanden sein. Das Plugin enthält diese Abhängigkeit nicht.
-3. Das Paket `artifacts/ElegantFinTV-0.1.1-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.1.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
+3. Das Paket `artifacts/ElegantFinTV-0.1.2-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.2.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
 4. Server starten. Im Dashboard unter Plugins **ElegantFin TV** öffnen. Standard: aktiviert, TV-Profil, Media-Bar-Adapter an, „Auch auf Desktop und Mobilgeräten“ aus.
 5. Die drei bisherigen CSS-Einbindungen können für den ersten TV-Test bestehen bleiben: Sie schließen `layout-tv` bereits aus. Die Dateien selbst müssen nicht bearbeitet werden. In der LG-App TV-Layout verwenden und die App vollständig schließen/neu starten, damit `index.html` neu angefordert wird.
 6. Das vorhandene Media-Bar-Plugin installiert lassen. ElegantFin TV lädt **keine zweite Media Bar** und ersetzt nicht deren Wiedergabe-, Favoriten-, Playlist- oder Trailerlogik.

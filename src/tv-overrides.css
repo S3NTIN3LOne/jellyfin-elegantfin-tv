@@ -24,6 +24,16 @@
     transition: none !important;
 }
 
+/* Media Bar uses literal blur values, independent of ElegantFin's variables. */
+:root[data-eftv][data-eftv-performance="balanced"] #slides-container :is(.slide-content, .detail-button, .favorite-button, .arrow) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+:root[data-eftv][data-eftv-performance="balanced"] #slides-container .logo.animate {
+    animation: none !important;
+}
+
 :root[data-eftv][data-eftv-performance="balanced"] .cardScalable::before,
 :root[data-eftv][data-eftv-performance="balanced"] .cardScalable::after {
     animation: none !important;
@@ -49,6 +59,13 @@
     outline-offset: -3px !important;
 }
 
+/* One outline follows the poster. Do not also outline its larger link/card box.
+ * Separate action buttons retain their own focus indicator. */
+:root[data-eftv] .card:has(.cardScalable):focus,
+:root[data-eftv] .card:has(.cardScalable) :is(.cardImageContainer, .cardContent):focus {
+    outline: none !important;
+}
+
 :root[data-eftv] .card:focus-within .cardOverlayContainer {
     opacity: 1;
 }
@@ -69,4 +86,20 @@
         animation: none !important;
         transition: none !important;
     }
+}
+
+/* Opt-in on-TV measurement; does not capture focus or block navigation. */
+:root[data-eftv] #eftv-diagnostics {
+    position: fixed;
+    z-index: 2147483647;
+    inset: 1rem 1rem auto auto;
+    max-width: min(42rem, 85vw);
+    padding: 1rem 1.25rem;
+    border: 2px solid #a5b4fc;
+    border-radius: .5rem;
+    background: #111827;
+    color: #fff;
+    font: 500 1rem/1.5 sans-serif;
+    white-space: pre-line;
+    pointer-events: none;
 }

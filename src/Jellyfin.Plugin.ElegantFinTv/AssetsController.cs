@@ -24,6 +24,7 @@ public sealed class AssetsController : ControllerBase
             enabled = configuration?.Enabled == true,
             applyToAllClients = configuration?.ApplyToAllClients == true,
             mediaBar = configuration?.MediaBar == true,
+            showDiagnostics = configuration?.ShowDiagnostics == true,
             performance = configuration?.Performance == "full" ? "full" : "balanced",
             version = typeof(Plugin).Assembly.GetName().Version?.ToString()
         });
