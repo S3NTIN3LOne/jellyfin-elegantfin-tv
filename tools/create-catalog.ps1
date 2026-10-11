@@ -2,13 +2,13 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$inputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.7-jf12.2.zip'
-$outputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.7-jf12.2-catalog.zip'
+$inputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.8-jf12.2.zip'
+$outputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.8-jf12.2-catalog.zip'
 $inputZip = [IO.Compression.ZipFile]::OpenRead($inputPath)
 $outputStream = [IO.File]::Open($outputPath, [IO.FileMode]::Create)
 $outputZip = [IO.Compression.ZipArchive]::new($outputStream, [IO.Compression.ZipArchiveMode]::Create)
 try {
-    $prefix = 'ElegantFinTV_0.1.7.0/'
+    $prefix = 'ElegantFinTV_0.1.8.0/'
     foreach ($entry in $inputZip.Entries) {
         if (!$entry.FullName.StartsWith($prefix)) { throw 'Unexpected manual-package structure' }
         $name = $entry.FullName.Substring($prefix.Length)
@@ -28,10 +28,10 @@ $manifest = @(@{
     owner = 'S3NTIN3LOne'
     category = 'General'
     versions = @(@{
-        version = '0.1.7.0'
-        changelog = 'Fix overlapping page tabs, clipped library navigation, native thick TV borders and grey poster corners. Keep header fixed with limited blur; separate Media Bar controls and prevent clipped action focus. Automatic slideshow fix requires Media Bar 3.0.0.3.'
+        version = '0.1.8.0'
+        changelog = 'Respect Media Bar TV height for the hero and following rows. Improve poster focus contrast with a 3px white outline and a dark edge. Fade header backdrop blur below the navigation.'
         targetAbi = '12.2.0.0'
-        sourceUrl = 'https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.7/ElegantFinTV-0.1.7-jf12.2-catalog.zip'
+        sourceUrl = 'https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.8/ElegantFinTV-0.1.8-jf12.2-catalog.zip'
         checksum = (Get-FileHash -LiteralPath $outputPath -Algorithm MD5).Hash.ToLowerInvariant()
         timestamp = [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
     })

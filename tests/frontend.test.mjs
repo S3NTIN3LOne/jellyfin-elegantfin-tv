@@ -243,7 +243,7 @@ test('poster cards have one outline; standalone buttons keep a visible focus ind
     await page.locator('#poster-test').focus();
     assert.equal(await page.locator('#poster-test').evaluate(el => getComputedStyle(el).outlineStyle), 'none');
     assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
-    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineWidth), '1px');
+    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineWidth), '3px');
     assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineColor), 'rgb(255, 255, 255)');
     await page.locator('#poster-test a').focus();
     assert.equal(await page.locator('#poster-test a').evaluate(el => getComputedStyle(el).outlineStyle), 'none');
@@ -335,8 +335,17 @@ test('minimal navigation header blurs only its fixed surface; playback header is
         }
     });
     assert.equal(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
-    assert.match(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backgroundImage), /linear-gradient/);
-    assert.equal(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backdropFilter), 'blur(8px)');
+    const header = page.locator('.skinHeader:not(.osdHeader)');
+    assert.equal(await header.evaluate(el => getComputedStyle(el).backdropFilter), 'none');
+    assert.equal(await header.evaluate(el => getComputedStyle(el).maskImage), 'none');
+    const fade = await header.evaluate(el => {
+        const s = getComputedStyle(el, '::before');
+        return {blur:s.backdropFilter, mask:s.maskImage, bottom:s.bottom, pointer:s.pointerEvents};
+    });
+    assert.equal(fade.blur, 'blur(8px)');
+    assert.match(fade.mask, /linear-gradient.*rgba\(0, 0, 0, 0\)/);
+    assert.equal(fade.bottom, '-32px');
+    assert.equal(fade.pointer, 'none');
     assert.equal(await page.locator('.osdHeader').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(10, 20, 30, 0.5)');
     await context.close();
 });
@@ -527,6 +536,33 @@ test('hero fits TV viewports, preserves slide transitions and leaves room for ho
     }
 });
 
+test('Media Bar height setting keeps the following rows at a constant gap', async () => {
+    for (const viewport of [{width:1920,height:1080}, {width:1280,height:720}]) {
+        const {page, context} = await open({viewport});
+        await page.evaluate(() => {
+            document.querySelector('head style').remove();
+            document.body.innerHTML = '<div class="page"><div id="slides-container"></div><div class="homeSectionsContainer">Movies</div></div>';
+            document.documentElement.style.setProperty('--slideshow-page-offset', '80px');
+        });
+        await page.addStyleTag({content: `
+            body{margin:0;padding:0}.page{display:flow-root;padding-top:80px}
+            #slides-container{position:absolute}
+            .homeSectionsContainer{position:relative;height:180px;margin-top:calc(var(--slideshow-tv-height) - var(--slideshow-page-offset))}
+        `});
+        for (const height of [60,30,40,undefined]) {
+            await page.evaluate(height => {
+                if (height) document.documentElement.style.setProperty('--slideshow-tv-height', height+'vh');
+                else document.documentElement.style.removeProperty('--slideshow-tv-height');
+            }, height);
+            const bar = await page.locator('#slides-container').boundingBox();
+            const rows = await page.locator('.homeSectionsContainer').boundingBox();
+            assert.ok(Math.abs(bar.height - viewport.height * (height || 62) / 100) < 1);
+            assert.ok(Math.abs(rows.y - bar.y - bar.height - 32) < 1, 'gap must not grow when bar height decreases');
+        }
+        await context.close();
+    }
+});
+
 test('TV header wraps every library, separates page tabs and remains visible on scroll', async () => {
     for (const width of [1920, 1280]) {
         const {page, context} = await open({viewport:{width,height:1080}});
@@ -581,7 +617,7 @@ test('native non-animated TV card borders and grey image corners are removed', a
         await page.locator('#native-card').focus();
         const border = await page.locator(visual ? '#native-card .cardBox' : '#native-card .cardScalable').evaluate(el => getComputedStyle(el).borderTopWidth);
         assert.equal(border, '0px');
-        assert.equal(await page.locator('#native-card .cardScalable').evaluate(el => getComputedStyle(el).outlineWidth), '1px');
+        assert.equal(await page.locator('#native-card .cardScalable').evaluate(el => getComputedStyle(el).outlineWidth), '3px');
         const radius = await page.locator('#native-card .cardScalable').evaluate(el => getComputedStyle(el).borderTopLeftRadius);
         for (const selector of ['.cardPadder','.cardImageContainer','.blurhash-canvas']) {
             assert.equal(await page.locator('#native-card '+selector).evaluate(el => getComputedStyle(el).borderTopLeftRadius), radius);

@@ -10,10 +10,10 @@
     --dimTextColor: #9ca3af;
     --borderColor: #47505c;
     --eftv-focus: #fff;
-    --eftv-focus-width: 1px;
+    --eftv-focus-width: 2px;
     --eftv-page-gutter: 2.4vw;
     --eftv-hero-top: calc(var(--eftv-header-height, 4rem) + 1rem);
-    --eftv-hero-height: 62vh;
+    --eftv-hero-height: var(--slideshow-tv-height, 62vh);
     --eftv-bar-control-size: 2.5rem;
     --eftv-bar-control-gap: .5rem;
     --eftv-bar-control-edge: 1rem;
@@ -36,15 +36,31 @@
 /* Transparent navigation with blur limited to the header surface.
  * Playback controls retain their native treatment. */
 :root[data-eftv] :is(.skinHeader:not(.osdHeader), .MuiAppBar-root:not(.osdHeader)) {
-    background: linear-gradient(to bottom, rgba(17, 24, 39, .88), rgba(17, 24, 39, .35) 65%, transparent) !important;
+    background: transparent !important;
     box-shadow: none !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    isolation: isolate;
+    overflow: visible !important;
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
     transform: none !important;
+}
+
+/* Fade only the backdrop layer; text, focus and pointer targets stay opaque. */
+:root[data-eftv] :is(.skinHeader:not(.osdHeader), .MuiAppBar-root:not(.osdHeader))::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 -2rem;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(17, 24, 39, .88), rgba(17, 24, 39, .35));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 2rem), transparent);
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2rem), transparent);
 }
 
 :root[data-eftv] :is(.sectionTitle, .pageTitle, .detailPagePrimaryContainer h1) {
@@ -109,8 +125,9 @@
 
 :root[data-eftv] .card:focus .cardScalable,
 :root[data-eftv] .card:focus-within .cardScalable {
-    outline: var(--eftv-focus-width) solid var(--eftv-focus) !important;
-    outline-offset: -1px !important;
+    outline: 3px solid var(--eftv-focus) !important;
+    outline-offset: 0 !important;
+    box-shadow: 0 0 0 4px #111827 !important;
 }
 
 :root[data-eftv] .card:has(.cardScalable):focus,

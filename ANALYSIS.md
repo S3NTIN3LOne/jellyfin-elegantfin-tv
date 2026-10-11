@@ -1,5 +1,11 @@
 # Analyse und Grenzen
 
+## Korrekturen 0.1.8.0
+
+Das minimale Theme reservierte unabhängig von der Media-Bar-Einstellung 62 vh. Höhe und Reihenabstand lesen jetzt gemeinsam `--slideshow-tv-height`, das Media Bar auf dem Dokument veröffentlicht. Der Regressionstest verändert diese Einstellung mehrfach und prüft den konstanten Abstand mit dem nativen Seitenoffset.
+
+Der bisherige 1-Pixel-Kartenrahmen war auf dem TV zu schwach. Jetzt wird ein weißer 3-Pixel-Rahmen mit einer dunklen 1-Pixel-Außenkante verwendet, ohne den nativen 0,5-em-Rahmen wieder einzuführen. Die Header-Unschärfe wird auf eine maskierte Pseudoebene verschoben; nur diese Ebene reicht 2 rem über die Kopfzeile hinaus und blendet aus. Es gibt keine zusätzlichen Beobachter, Timer oder animierten Filter.
+
 ## Korrekturen 0.1.7.0 und Media Bar 3.0.0.3
 
 Die TV-Fotos zeigen überlagernde `.headerTabs`, eine abgeschnittene letzte Bibliothek, überlappende Media-Bar-Pfeile und weiterhin breite türkisfarbene Kartenrahmen. Die bisherige Test-Fixture enthielt weder die native TV-Rahmenregel noch die großen TV-Pfeile und die absolut positionierten Kopfzeilen-Tabs. Die neuen Regressionstests enthalten diese konkurrierenden Regeln und prüfen ihre tatsächliche berechnete Geometrie bei großen Schriften.
