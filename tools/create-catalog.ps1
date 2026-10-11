@@ -2,13 +2,13 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$inputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.5-jf12.2.zip'
-$outputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.5-jf12.2-catalog.zip'
+$inputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.6-jf12.2.zip'
+$outputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.6-jf12.2-catalog.zip'
 $inputZip = [IO.Compression.ZipFile]::OpenRead($inputPath)
 $outputStream = [IO.File]::Open($outputPath, [IO.FileMode]::Create)
 $outputZip = [IO.Compression.ZipArchive]::new($outputStream, [IO.Compression.ZipArchiveMode]::Create)
 try {
-    $prefix = 'ElegantFinTV_0.1.5.0/'
+    $prefix = 'ElegantFinTV_0.1.6.0/'
     foreach ($entry in $inputZip.Entries) {
         if (!$entry.FullName.StartsWith($prefix)) { throw 'Unexpected manual-package structure' }
         $name = $entry.FullName.Substring($prefix.Length)
@@ -28,10 +28,10 @@ $manifest = @(@{
     owner = 'S3NTIN3LOne'
     category = 'General'
     versions = @(@{
-        version = '0.1.5.0'
-        changelog = 'Replace the balanced profile with independent minimal styling: ElegantFin colours, Inter and rounded cards with native Jellyfin layout and motion. Keep the full theme in a separately loaded comparison bundle. TV validation pending.'
+        version = '0.1.6.0'
+        changelog = 'Add thin white focus outlines, an inset rounded Media Bar with browser-style controls, and transparent navigation without blur. Reuse user library links in the classic TV header. Keep native card motion and slide transitions. TV validation pending.'
         targetAbi = '12.2.0.0'
-        sourceUrl = 'https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.5/ElegantFinTV-0.1.5-jf12.2-catalog.zip'
+        sourceUrl = 'https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.6/ElegantFinTV-0.1.6-jf12.2-catalog.zip'
         checksum = (Get-FileHash -LiteralPath $outputPath -Algorithm MD5).Hash.ToLowerInvariant()
         timestamp = [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
     })

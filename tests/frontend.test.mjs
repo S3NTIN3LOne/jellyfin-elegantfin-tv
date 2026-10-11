@@ -243,6 +243,8 @@ test('poster cards have one outline; standalone buttons keep a visible focus ind
     await page.locator('#poster-test').focus();
     assert.equal(await page.locator('#poster-test').evaluate(el => getComputedStyle(el).outlineStyle), 'none');
     assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
+    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineWidth), '1px');
+    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineColor), 'rgb(255, 255, 255)');
     await page.locator('#poster-test a').focus();
     assert.equal(await page.locator('#poster-test a').evaluate(el => getComputedStyle(el).outlineStyle), 'none');
     assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
@@ -309,7 +311,7 @@ test('minimal theme preserves native card dimensions, focus zoom, transitions an
     const native = await read();
     assert.equal(native.transform, 'matrix(1.1, 0, 0, 1.1, 0, 0)');
     assert.equal(native.duration, '0.2s');
-    assert.notEqual(native.shadow, 'none');
+    assert.equal(native.shadow, 'none');
     assert.equal(await page.locator('#motion-card').evaluate(el => getComputedStyle(el).width), '150px');
     assert.equal(await page.locator('#motion-card .cardScalable').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
     await page.locator('#motion-card button').focus();
@@ -317,11 +319,14 @@ test('minimal theme preserves native card dimensions, focus zoom, transitions an
     await page.evaluate(() => window.ElegantFinTv.dispose());
     await page.locator('#motion-card').focus();
     await page.waitForTimeout(250);
-    assert.deepEqual(await read(), native);
+    const restored = await read();
+    assert.equal(restored.transform, native.transform);
+    assert.equal(restored.duration, native.duration);
+    assert.notEqual(restored.shadow, 'none');
     await context.close();
 });
 
-test('balanced navigation header is opaque; playback header is not overridden', async () => {
+test('minimal navigation header is transparent without blur; playback header is not overridden', async () => {
     const {page, context} = await open();
     await page.addStyleTag({ content: '.skinHeader {background:rgba(10,20,30,.5)} .skinHeader::after {content:""}' });
     await page.evaluate(() => {
@@ -329,7 +334,9 @@ test('balanced navigation header is opaque; playback header is not overridden', 
             const el = document.createElement('header'); el.className=name; document.body.appendChild(el);
         }
     });
-    assert.equal(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(17, 24, 39)');
+    assert.equal(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+    assert.match(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backgroundImage), /linear-gradient/);
+    assert.equal(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backdropFilter), 'none');
     assert.equal(await page.locator('.osdHeader').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(10, 20, 30, 0.5)');
     await context.close();
 });
@@ -435,4 +442,87 @@ test('dimension samples read existing IMG sizes only and do not retain identifyi
     assert.equal(result.imageRequestsObserved, 0);
     assert.doesNotMatch(JSON.stringify(result), /private-id|secret|token=/);
     await context.close();
+});
+
+
+test('classic TV navigation uses user library routes and handles late rendering, focus and removal', async () => {
+    const {page, context} = await open();
+    await page.evaluate(() => {
+        const header = document.createElement('header');
+        header.className = 'skinHeader';
+        header.innerHTML = '<div class="headerTop"><div class="headerLeft"><h3 class="pageTitle">Startseite</h3></div><div class="headerRight"><button id="native-search">Search</button></div></div>';
+        document.body.prepend(header);
+        const drawer = document.createElement('div');
+        drawer.className = 'mainDrawer'; drawer.hidden = true;
+        drawer.innerHTML = '<div class="libraryMenuOptions"><a class="navMenuOption" data-itemid="movie-id" href="#/movies?topParentId=movie-id"><span class="material-icons navMenuOptionIcon movie"></span><span class="navMenuOptionText">Meine Filme</span></a><a class="navMenuOption" data-itemid="tv-id" href="#/livetv"><span class="navMenuOptionText">Live TV</span></a><a class="navMenuOption" data-itemid="tv-id" href="#/livetv?tab=1">Guide</a><a class="navMenuOption" href="https://example.com">External</a></div>';
+        document.body.appendChild(drawer);
+    });
+    await page.waitForSelector('.eftv-library-nav');
+    assert.equal(await page.locator('.eftv-library-nav a').count(), 4);
+    const movieLink = page.locator('.eftv-library-nav a[href="#/movies?topParentId=movie-id"]');
+    await movieLink.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => location.hash === '#/movies?topParentId=movie-id');
+    await page.waitForFunction(() => document.querySelector('.eftv-library-nav a[aria-current="page"]')?.textContent.includes('Meine Filme'));
+    await page.evaluate(() => document.querySelector('.libraryMenuOptions .navMenuOptionText').textContent = 'Filme & Serien');
+    await page.waitForFunction(() => document.activeElement?.textContent.includes('Filme & Serien'));
+    assert.equal(await page.locator('#native-search').count(), 1);
+    await page.locator('.eftv-library-nav a[href="#/home?tab=1"]').focus();
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => location.hash === '#/home?tab=1');
+    await page.evaluate(() => document.querySelector('.libraryMenuOptions').replaceChildren());
+    await page.waitForFunction(() => !document.querySelector('.eftv-library-nav'));
+    assert.equal(await page.locator('.skinHeader').getAttribute('data-eftv-navigation'), null);
+    await page.evaluate(() => document.querySelector('.libraryMenuOptions').innerHTML = '<a class="navMenuOption" href="#/movies">Movies</a>');
+    await page.waitForSelector('.eftv-library-nav');
+    await page.evaluate(() => window.ElegantFinTv.dispose());
+    assert.equal(await page.locator('.eftv-library-nav').count(), 0);
+    assert.notEqual(await page.locator('.pageTitle').evaluate(el => getComputedStyle(el).display), 'none');
+    await context.close();
+});
+
+test('modern header does not get duplicate navigation from its hidden legacy header', async () => {
+    const {page, context} = await open();
+    await page.evaluate(() => {
+        const hidden = document.createElement('div'); hidden.style.display = 'none';
+        hidden.innerHTML = '<div class="skinHeader"><div class="headerTop"></div></div><div class="mainDrawer"><div class="libraryMenuOptions"><a class="navMenuOption" href="#/movies">Movies</a></div></div>';
+        document.body.appendChild(hidden);
+        const modern = document.createElement('header'); modern.className = 'MuiAppBar-root';
+        modern.innerHTML = '<a class="MuiButton-text" href="#/movies">Movies</a>';
+        document.body.appendChild(modern);
+    });
+    await page.waitForTimeout(60);
+    assert.equal(await page.locator('.eftv-library-nav').count(), 0);
+    assert.equal(await page.locator('.MuiAppBar-root a').count(), 1);
+    await context.close();
+});
+
+test('hero fits TV viewports, preserves slide transitions and leaves room for home rows', async () => {
+    for (const viewport of [{width:1920,height:1080},{width:1280,height:720}]) {
+        const {page, context} = await open({viewport, deviceScaleFactor:2});
+        await page.evaluate(() => {
+            // Representative native Media Bar v3+ structure and absolute stage.
+            document.querySelector('head style').remove();
+            const style = document.createElement('style');
+            style.textContent = 'html{font-size:20px}body{margin:0}#slides-container{position:absolute;top:0;left:0;width:100%;height:100vh;margin-top:-50vw}.slide{position:absolute;inset:0;transition:opacity .5s}.slide-content{position:absolute;display:flex;flex-direction:column}.logo-container{display:flex}.logo{height:100%;width:100%}.button-container{display:flex;gap:15px}.dots-container,.arrow{position:absolute}.homeSectionsContainer{position:relative;height:180px}';
+            document.head.appendChild(style);
+            document.querySelector('#one').innerHTML = '<div class="slide-content"><div class="logo-container"><div class="logo">Example title</div></div><div>2026 ? 2h 7m</div><div class="plot">A short description of this example film.</div><div class="button-container"><button class="play-button">Play</button><button class="detail-button">Info</button><button class="favorite-button">Favorite</button></div></div>';
+            document.querySelector('#two').remove();
+            const bar = document.querySelector('#slides-container');
+            bar.insertAdjacentHTML('beforeend','<div class="dots-container"><button class="dot active"></button><button class="dot"></button></div><button class="arrow left-arrow">Previous</button><button class="arrow right-arrow">Next</button>');
+            document.body.insertAdjacentHTML('beforeend','<div class="homeSectionsContainer">Meine Medien</div>');
+        });
+        const bar = await page.locator('#slides-container').boundingBox();
+        const content = await page.locator('.slide-content').boundingBox();
+        const rows = await page.locator('.homeSectionsContainer').boundingBox();
+        assert.ok(bar.x > 0 && bar.x + bar.width < viewport.width);
+        assert.ok(content.y >= bar.y && content.y + content.height < bar.y + bar.height);
+        assert.ok(rows.y > bar.y + bar.height);
+        assert.equal(await page.locator('#one').evaluate(el => getComputedStyle(el).transitionDuration), '0.5s');
+        assert.equal(await page.locator('#one').evaluate(el => getComputedStyle(el).maskImage), 'none');
+        assert.equal(await page.locator('.play-button').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(209, 213, 219)');
+        const next = await page.locator('.right-arrow').boundingBox();
+        assert.ok(next.x > bar.x + bar.width / 2 && next.y > bar.y + bar.height / 2);
+        await context.close();
+    }
 });

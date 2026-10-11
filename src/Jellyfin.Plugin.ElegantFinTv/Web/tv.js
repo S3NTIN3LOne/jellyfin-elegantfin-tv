@@ -22,6 +22,12 @@
     var diagnosticsBusy = false;
     var previousFocus = null;
     var measurementRun = 0;
+    var navigationObserver = null;
+    var navigationFrame = 0;
+    var navigation = null;
+    var navigationHeader = null;
+    var navigationDrawer = null;
+    var navigationSignature = '';
     var controls = '.play-button,.detail-button,.favorite-button,.pause-button,.volume-toggle,.left-arrow,.right-arrow,.dot';
     var labels = {
         'play-button': 'Abspielen', 'detail-button': 'Details', 'favorite-button': 'Favorit',
@@ -173,6 +179,126 @@
         return root.classList.contains('layout-tv') || /web0s|webos|netcast/i.test(navigator.userAgent);
     }
 
+    // Reuse the classic client's user-specific library links. No extra API
+    // requests, fixed library IDs, polling, or replacement of native controls.
+    function refreshNavigation() {
+        navigationFrame = 0;
+        var header = document.querySelector('.skinHeader:not(.osdHeader)');
+        var top = header && header.querySelector('.headerTop');
+        var drawer = document.querySelector('.mainDrawer .libraryMenuOptions');
+        var sources = drawer ? Array.from(drawer.querySelectorAll('a.navMenuOption[href]')) : [];
+        // Modern layouts already render their own navigation. Their legacy
+        // header is hidden inside a wrapper; do not add a second menu there.
+        if (!top || !header.getClientRects().length || !sources.length) {
+            removeNavigation();
+            return;
+        }
+        var items = [{ href: '#/home', label: 'Jellyfin', icon: 'home', brand: true },
+            { href: '#/home?tab=1', label: 'Favoriten', icon: 'favorite' }];
+        var seen = new Set();
+        sources.forEach(function (source) {
+            var href = source.getAttribute('href');
+            // Only copy same-client hash routes, never custom external links.
+            if (!href || !href.startsWith('#/') || seen.has(href)) return;
+            // The drawer can include an extra TV guide link for the same library.
+            var id = source.getAttribute('data-itemid');
+            if (id && seen.has('id:' + id)) return;
+            seen.add(href);
+            if (id) seen.add('id:' + id);
+            var label = source.querySelector('.navMenuOptionText');
+            var icon = source.querySelector('.material-icons');
+            var glyph = icon && (icon.textContent.trim() || Array.from(icon.classList).find(function (name) {
+                return name !== 'material-icons' && name !== 'navMenuOptionIcon';
+            }));
+            items.push({ href: href, label: (label || source).textContent.trim(), icon: glyph || 'video_library' });
+        });
+        var signature = JSON.stringify(items);
+        if (!navigation || !navigation.isConnected || navigationHeader !== header || signature !== navigationSignature) {
+            var focusedHref = navigation && navigation.contains(document.activeElement) ? document.activeElement.getAttribute('href') : null;
+            removeNavigation();
+            navigation = document.createElement('nav');
+            navigation.className = 'eftv-library-nav focuscontainer-x';
+            navigation.setAttribute('aria-label', 'Bibliotheken');
+            items.forEach(function (item) {
+                var a = document.createElement('a');
+                a.href = item.href;
+                a.className = 'emby-button' + (item.brand ? ' eftv-brand' : '');
+                var icon = document.createElement('span');
+                icon.className = 'material-icons';
+                icon.setAttribute('aria-hidden', 'true');
+                icon.textContent = item.icon;
+                a.appendChild(icon);
+                a.appendChild(document.createTextNode(item.label));
+                navigation.appendChild(a);
+            });
+            top.insertBefore(navigation, top.querySelector('.headerRight'));
+            navigationHeader = header;
+            navigationDrawer = drawer;
+            header.setAttribute('data-eftv-navigation', '');
+            navigationSignature = signature;
+            if (focusedHref) {
+                var replacement = Array.from(navigation.children).find(function (a) { return a.getAttribute('href') === focusedHref; });
+                if (replacement) replacement.focus({ preventScroll: true });
+            }
+        }
+        Array.from(navigation.children).forEach(function (a) {
+            if (a.getAttribute('href') === window.location.hash) a.setAttribute('aria-current', 'page');
+            else a.removeAttribute('aria-current');
+        });
+    }
+
+    function removeNavigation() {
+        if (navigation) navigation.remove();
+        if (navigationHeader) navigationHeader.removeAttribute('data-eftv-navigation');
+        navigation = null;
+        navigationHeader = null;
+        navigationDrawer = null;
+        navigationSignature = '';
+    }
+
+    function scheduleNavigation() {
+        if (!navigationFrame) navigationFrame = requestAnimationFrame(refreshNavigation);
+    }
+
+    function startNavigation() {
+        if (navigationObserver) { scheduleNavigation(); return; }
+        if (!document.body) return;
+        refreshNavigation();
+        navigationObserver = new MutationObserver(function (records) {
+            // Once mounted, ordinary poster/slide mutations need no discovery
+            // scans. Only library contents or removal of the owned nodes matter.
+            if (navigation && navigation.isConnected && navigationDrawer && navigationDrawer.isConnected) {
+                if (records.some(function (record) { return navigationDrawer.contains(record.target); })) scheduleNavigation();
+                return;
+            }
+            var relevant = '.skinHeader,.headerTop,.mainDrawer,.libraryMenuOptions';
+            var changed = records.some(function (record) {
+                var target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
+                if (target && target.closest('.eftv-library-nav')) return false;
+                if (target && target.closest('.libraryMenuOptions')) return true;
+                return Array.from(record.addedNodes).concat(Array.from(record.removedNodes)).some(function (node) {
+                    return node.nodeType === 1 && (node.matches(relevant) || node.querySelector(relevant));
+                });
+            });
+            if (changed) scheduleNavigation();
+        });
+        navigationObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+        window.addEventListener('hashchange', scheduleNavigation);
+        document.addEventListener('viewshow', scheduleNavigation);
+        document.addEventListener('pageshow', scheduleNavigation);
+    }
+
+    function stopNavigation() {
+        if (navigationObserver) navigationObserver.disconnect();
+        navigationObserver = null;
+        if (navigationFrame) cancelAnimationFrame(navigationFrame);
+        navigationFrame = 0;
+        window.removeEventListener('hashchange', scheduleNavigation);
+        document.removeEventListener('viewshow', scheduleNavigation);
+        document.removeEventListener('pageshow', scheduleNavigation);
+        removeNavigation();
+    }
+
     function components() {
         var mode = isTv() && ['reference', 'theme', 'adapter', 'complete'].includes(config.comparisonMode) ? config.comparisonMode : 'normal';
         return { mode: mode, theme: mode !== 'reference' && mode !== 'adapter',
@@ -193,6 +319,7 @@
             root.removeAttribute('data-eftv');
             root.removeAttribute('data-eftv-performance');
             stopMediaBar();
+            stopNavigation();
             stopDiagnostics();
             if (link) link.disabled = true;
             return;
@@ -201,7 +328,7 @@
         if (parts.theme && !link) {
             link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = new URL((config.performance === 'full' ? 'tv-full.css' : 'tv.css') + '?v=' + encodeURIComponent(config.version || '0.1.5'), assetBase).href;
+            link.href = new URL((config.performance === 'full' ? 'tv-full.css' : 'tv.css') + '?v=' + encodeURIComponent(config.version || '0.1.6'), assetBase).href;
             link.onload = function () { loaded = true; reconcile(); };
             link.onerror = function () { console.warn('ElegantFin TV: stylesheet could not be loaded.'); };
             document.head.appendChild(link);
@@ -217,6 +344,7 @@
             root.removeAttribute('data-eftv-performance');
         }
         if (parts.adapter) startMediaBar(); else stopMediaBar();
+        if (parts.theme && config.performance !== 'full' && isTv()) startNavigation(); else stopNavigation();
         if (config.showDiagnostics === true && isTv()) startDiagnostics();
         else stopDiagnostics();
     }
@@ -432,7 +560,7 @@
                 measurementRun++;
                 function number(value) { return value === null ? 'n/v' : value; }
                 var rows = [
-                    'ElegantFin TV ' + (config.version || '0.1.5') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
+                    'ElegantFin TV ' + (config.version || '0.1.6') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
                     'Theme: ' + result.components.theme + ' · Adapter: ' + result.components.adapter + ' · Profil: ' + (result.profile || 'Standard') + ' · Chrome ' + result.browserEngine,
                     result.viewport.width + '×' + result.viewport.height + ' · DPR ' + result.viewport.pixelRatio + ' · ' + result.startedAt,
                     'Frames/s: ' + number(result.frameSamplesPerSecond) + ' · längste Pause: ' + number(result.longestFrameMs) + ' ms',
@@ -457,7 +585,7 @@
     }
 
     window.ElegantFinTv = {
-        version: config.version || '0.1.5',
+        version: config.version || '0.1.6',
         diagnose: diagnose,
         status: function () { return { active: active, tv: isTv(), mediaBarFound: !!bar, profile: root.getAttribute('data-eftv-performance'), components: components() }; },
         dispose: function () {

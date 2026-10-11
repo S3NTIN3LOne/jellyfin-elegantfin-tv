@@ -12,11 +12,13 @@ try {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $artifacts = Join-Path $projectRoot 'artifacts'
     New-Item -ItemType Directory -Force -Path $artifacts | Out-Null
-    $sourcePath = Join-Path $artifacts 'ElegantFinTV-0.1.5-source.zip'
+    $sourcePath = Join-Path $artifacts 'ElegantFinTV-0.1.6-source.zip'
     $sourceStream = [IO.File]::Open($sourcePath, [IO.FileMode]::Create)
     $sourceZip = [IO.Compression.ZipArchive]::new($sourceStream, [IO.Compression.ZipArchiveMode]::Create)
     try {
-        $sourceFiles = @(Get-ChildItem -LiteralPath $projectRoot -File)
+        # The catalogue contains this package's checksum and is generated after
+        # packaging. Do not embed a stale/circular manifest in the source ZIP.
+        $sourceFiles = @(Get-ChildItem -LiteralPath $projectRoot -File | Where-Object { $_.Name -ne 'manifest.json' })
         foreach ($dir in @('src', 'vendor', 'tools', 'tests')) {
             $sourceFiles += Get-ChildItem -LiteralPath (Join-Path $projectRoot $dir) -File -Recurse |
                 Where-Object { $_.FullName -notmatch '[\\/](bin|obj|node_modules)[\\/]' }
@@ -27,11 +29,11 @@ try {
         }
     } finally { $sourceZip.Dispose(); $sourceStream.Dispose() }
 
-    $packagePath = Join-Path $artifacts 'ElegantFinTV-0.1.5-jf12.2.zip'
+    $packagePath = Join-Path $artifacts 'ElegantFinTV-0.1.6-jf12.2.zip'
     $packageStream = [IO.File]::Open($packagePath, [IO.FileMode]::Create)
     $packageZip = [IO.Compression.ZipArchive]::new($packageStream, [IO.Compression.ZipArchiveMode]::Create)
     try {
-        $folder = 'ElegantFinTV_0.1.5.0/'
+        $folder = 'ElegantFinTV_0.1.6.0/'
         $dll = Join-Path $projectRoot 'src/Jellyfin.Plugin.ElegantFinTv/bin/Release/net10.0/Jellyfin.Plugin.ElegantFinTv.dll'
         [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($packageZip, $dll, ($folder + 'Jellyfin.Plugin.ElegantFinTv.dll')) | Out-Null
         [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($packageZip, $sourcePath, ($folder + 'source.zip')) | Out-Null

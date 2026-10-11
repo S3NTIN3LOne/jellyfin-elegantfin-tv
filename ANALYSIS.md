@@ -1,5 +1,13 @@
 # Analyse und Grenzen
 
+## Verfeinerung 0.1.6.0 nach positivem TV-Test
+
+Der Nutzer meldet für das schlanke Design deutlich bessere Performance. Gewünscht sind nun ein dünner weißer Fokusrahmen, eine eingerückte Media Bar und eine transparente Navigation mit Bibliothekslinks entsprechend drei Browser-Referenzbildern. Umsetzung im schlanken Profil: 1-Pixel-Fokuslinie, Entfernung des zusätzlichen Kartenbox-Fokusschattens, Media-Bar-Geometrie und statische Transparenz ohne Blur. Layoutklassen, Kartenbreiten und Jellyfins Bewegungen bleiben erhalten.
+
+Die TV-Leiste übernimmt Bibliothekslinks aus `.mainDrawer .libraryMenuOptions`, ergänzt Home und den Favoriten-Tab und behält vorhandene Kopfzeilenaktionen. Der [Jellyfin-Header](https://github.com/jellyfin/jellyfin-web/blob/master/src/scripts/libraryMenu.js) und die [Home-Tabs](https://github.com/jellyfin/jellyfin-web/blob/master/src/apps/legacy/controllers/home.js) wurden als Integrationsreferenz gelesen; sie sind kein Nachweis des exakten installierten Clientstands. Die moderne Oberfläche hat einen versteckten Legacy-Header und bekommt keine doppelte Navigation. Fehlende Bibliothekslinks werden nicht mit erfundenen IDs ersetzt. Beobachtung ist ereignisbasiert; nach dem Einfügen werden gewöhnliche Poster-/Slide-Mutationen ohne Unterbaumsuche verworfen. Bei Deaktivierung werden Leiste und Observer entfernt.
+
+Die lokal vorhandenen Media-Bar-Quellen wurden nur gelesen. Sie enthalten inzwischen auch neuere Layoutvarianten; der tatsächlich installierte Stand ist damit nicht bestätigt. Die Anpassung nutzt die bekannten v3+-Klassen `slide-content`, `logo-container`, `plot-container`, `dots-container` und `arrow`. Bild-URLs, Downloadplanung und Wiedergabehandler werden nicht verändert. Noch zu prüfen: D-Pad-Wechsel zwischen Header, Hero und Medienreihen im echten Client, Serverbibliotheken, Trailer, genaue Abstände und die Performance mit transparenter Kopfzeile.
+
 ## TV-Vergleich vom 10.10.2026 und schlankes Design 0.1.5.0
 
 Auf der Startseite wurden in Version 0.1.4.0 Referenz und Nur Theme verglichen, jeweils ohne Fokusadapter. Referenz: 37 Frame-Aufrufe/s, 42 Pausen über 50 ms, 56 lange Aufgaben mit insgesamt 6337 ms in 15,9 s. Nur Theme (balanced): 11 Frame-Aufrufe/s, 70 Pausen, 83 lange Aufgaben mit insgesamt 11666 ms in 15 s. Die langsamsten erfassten Bildanfragen lagen bei 38/54 ms. Die aggregierten komprimierten Bilddaten unterschieden sich mit 1161/5859 KiB deutlich; Cache und Bildauswahl sind nicht kontrolliert. Der Nutzer beschreibt die Referenz mit und ohne Diagnose als gleichermaßen flüssig.

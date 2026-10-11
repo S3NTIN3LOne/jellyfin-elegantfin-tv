@@ -9,7 +9,11 @@
     --textColor: #d1d5db;
     --dimTextColor: #9ca3af;
     --borderColor: #47505c;
-    --eftv-focus: #a5b4fc;
+    --eftv-focus: #fff;
+    --eftv-focus-width: 1px;
+    --eftv-page-gutter: 2.4vw;
+    --eftv-hero-top: 5rem;
+    --eftv-hero-height: 62vh;
     color-scheme: dark;
     color: var(--textColor);
     font-family: Inter, sans-serif;
@@ -26,10 +30,11 @@
     color: var(--textColor);
 }
 
-/* Solid navigation surfaces avoid blurring the scrolling page behind them.
- * Playback controls keep Jellyfin's own transparent treatment. */
+/* Transparent navigation with a static readability gradient, without blur.
+ * Playback controls retain their native treatment. */
 :root[data-eftv] :is(.skinHeader:not(.osdHeader), .MuiAppBar-root:not(.osdHeader)) {
-    background: var(--darkerGradientPoint) !important;
+    background: linear-gradient(to bottom, rgba(17, 24, 39, .88), rgba(17, 24, 39, .35) 65%, transparent) !important;
+    box-shadow: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }
@@ -90,14 +95,14 @@
 :root[data-eftv] :is(a, button, input, select, textarea, [tabindex]):focus-visible,
 :root[data-eftv] .show-focus:focus,
 :root[data-eftv] #slides-container [data-eftv-control]:focus {
-    outline: 3px solid var(--eftv-focus) !important;
-    outline-offset: 3px !important;
+    outline: var(--eftv-focus-width) solid var(--eftv-focus) !important;
+    outline-offset: 2px !important;
 }
 
 :root[data-eftv] .card:focus .cardScalable,
 :root[data-eftv] .card:focus-within .cardScalable {
-    outline: 3px solid var(--eftv-focus) !important;
-    outline-offset: -3px !important;
+    outline: var(--eftv-focus-width) solid var(--eftv-focus) !important;
+    outline-offset: -1px !important;
 }
 
 :root[data-eftv] .card:has(.cardScalable):focus,
@@ -105,8 +110,8 @@
     outline: none !important;
 }
 
-/* The independent Media Bar keeps its sizing, controls and slide transitions.
- * Only its fixed blur effects and animated logo are simplified. */
+/* Browser-style controls on the existing Media Bar. Its slide transitions
+ * and actions remain native; fixed blur and animated logos are simplified. */
 :root[data-eftv] #slides-container :is(.play-button, .detail-button, .favorite-button, .pause-button, .volume-toggle, .left-arrow, .right-arrow) {
     border-radius: .5em;
     min-width: 2.75rem;
@@ -120,8 +125,12 @@
 }
 
 :root[data-eftv] #slides-container .play-button {
-    background-color: var(--accentColor);
-    color: #fff;
+    background-color: var(--textColor);
+    color: #111827;
+    border: 1px solid var(--borderColor);
+    border-radius: 999px;
+    padding-inline: 2rem;
+    font-weight: 500;
 }
 
 :root[data-eftv] #slides-container :is(.slide-content, .detail-button, .favorite-button, .arrow) {
@@ -135,4 +144,196 @@
 
 :root[data-eftv] #slides-container[data-eftv-adapted] .slide[inert] {
     pointer-events: none;
+}
+
+/* Browser-style hero geometry. No global desktop layout or animation bundle. */
+:root[data-eftv] #slides-container {
+    top: var(--eftv-hero-top) !important;
+    left: var(--eftv-page-gutter) !important;
+    width: calc(100% - var(--eftv-page-gutter) * 2) !important;
+    height: var(--eftv-hero-height) !important;
+    margin-top: 0 !important;
+    border-radius: 1rem;
+    overflow: hidden;
+    --slideshow-height: var(--eftv-hero-height);
+    --slideshow-gutter: 3.4vw;
+}
+
+:root[data-eftv] #slides-container .slide {
+    border-radius: 1rem;
+    overflow: hidden;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+}
+
+:root[data-eftv] #slides-container :is(.backdrop:not(.with-video), .backdrop-container, .backdrop-overlay, .gradient-overlay) {
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+}
+
+:root[data-eftv] #slides-container .backdrop-overlay {
+    background: linear-gradient(0deg, rgba(0, 0, 0, .6), transparent 65%);
+}
+
+:root[data-eftv] #slides-container .slide-content {
+    top: auto !important;
+    bottom: 3.5rem !important;
+    left: var(--slideshow-gutter) !important;
+    transform: none !important;
+    width: 40% !important;
+    max-height: calc(100% - 5rem) !important;
+    gap: .75rem;
+}
+
+:root[data-eftv] #slides-container .slide-content .logo-container {
+    height: 18vh;
+    max-width: 100%;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+:root[data-eftv] #slides-container .slide-content .logo {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: left bottom;
+}
+
+:root[data-eftv] #slides-container .plot {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+:root[data-eftv] #slides-container :is(.detail-button, .favorite-button) {
+    background: transparent;
+    border-radius: 50%;
+    border: 1px solid var(--borderColor);
+    color: var(--textColor);
+}
+
+:root[data-eftv] #slides-container .detail-button {
+    border-color: transparent;
+}
+
+:root[data-eftv] #slides-container .favorite-button.favorited {
+    color: #ff4d4d;
+    border-color: currentColor;
+}
+
+:root[data-eftv] #slides-container .dots-container {
+    top: auto !important;
+    bottom: 1.25rem !important;
+    left: var(--slideshow-gutter) !important;
+    right: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    transform: none !important;
+}
+
+:root[data-eftv] #slides-container .dot {
+    width: .375rem;
+    height: .375rem;
+    border-radius: .25rem;
+    background: var(--textColor);
+    opacity: .5;
+    transition: none;
+}
+
+:root[data-eftv] #slides-container .dot.active {
+    width: 1.5rem;
+    transform: none;
+    opacity: 1;
+}
+
+:root[data-eftv] #slides-container .arrow {
+    top: auto !important;
+    bottom: 1rem !important;
+    left: auto !important;
+    transform: none !important;
+    border-radius: 50%;
+    background: rgba(17, 24, 39, .35);
+    visibility: visible;
+    opacity: 1;
+}
+
+:root[data-eftv] #slides-container .right-arrow { right: .8rem !important; }
+:root[data-eftv] #slides-container .left-arrow { right: 4rem !important; }
+:root[data-eftv] #slides-container :is(.pause-button, .volume-toggle, .ss-settings-toggle) { top: 1rem !important; }
+
+/* Media Bar positions itself absolutely; reserve its space above home rows.
+ * Its page-offset variable accounts for the native page/header top padding. */
+:root[data-eftv] body:has(#slides-container:not(.hide):not([hidden])) .homeSectionsContainer {
+    top: 0 !important;
+    margin-top: calc(var(--eftv-hero-top) + var(--eftv-hero-height) + 2rem - var(--slideshow-page-offset, 0px)) !important;
+}
+
+/* MUI already supplies library buttons. The classic TV header receives links
+ * copied from the existing user-specific drawer by the frontend adapter. */
+:root[data-eftv] .eftv-library-nav {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: .3rem;
+}
+
+:root[data-eftv] .eftv-library-nav::-webkit-scrollbar { display: none; }
+:root[data-eftv] .skinHeader[data-eftv-navigation] .headerLeft { flex: 0 0 auto; }
+:root[data-eftv] .skinHeader[data-eftv-navigation] .headerRight { flex: 0 0 auto; }
+:root[data-eftv] .skinHeader[data-eftv-navigation] .headerTop { gap: .75rem; }
+:root[data-eftv] .skinHeader[data-eftv-navigation] .pageTitle { display: none; }
+
+:root[data-eftv] .eftv-library-nav a,
+:root[data-eftv] .MuiAppBar-root .MuiButton-text:not(.MuiButtonGroup-grouped) {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: .5rem;
+    padding: .4rem .9rem;
+    background: rgba(17, 24, 39, .9);
+    color: var(--textColor);
+    border-radius: 999px;
+    text-decoration: none;
+    white-space: nowrap;
+    font: inherit;
+}
+
+:root[data-eftv] .eftv-library-nav .eftv-brand {
+    background: transparent;
+    color: #fff;
+    font-weight: 600;
+    border-right: 1px solid var(--borderColor);
+    border-radius: 0;
+}
+
+/* Some Media Bar versions hide the description in their compact TV mode. */
+:root[data-eftv] #slides-container .slide-content .plot-container {
+    display: block !important;
+}
+
+:root[data-eftv] .MuiAppBar-root .MuiButton-text:has(.MuiButton-startIcon > img) {
+    background: transparent;
+    color: #fff;
+    font-weight: 600;
+}
+
+:root[data-eftv] .eftv-library-nav a[aria-current="page"] {
+    background: var(--textColor);
+    color: #111827;
+}
+
+@media (max-width: 900px) {
+    :root[data-eftv] #slides-container .slide-content { width: 75% !important; }
+}
+
+/* Replace Jellyfin's thick focus shadow with the single thin poster outline. */
+:root[data-eftv] .card:focus .cardBox,
+:root[data-eftv] .card:focus-within .cardBox {
+    box-shadow: none !important;
 }
