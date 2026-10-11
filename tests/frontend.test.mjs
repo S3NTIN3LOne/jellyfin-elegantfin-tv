@@ -326,7 +326,7 @@ test('minimal theme preserves native card dimensions, focus zoom, transitions an
     await context.close();
 });
 
-test('minimal navigation header is transparent without blur; playback header is not overridden', async () => {
+test('minimal navigation header blurs only its fixed surface; playback header is not overridden', async () => {
     const {page, context} = await open();
     await page.addStyleTag({ content: '.skinHeader {background:rgba(10,20,30,.5)} .skinHeader::after {content:""}' });
     await page.evaluate(() => {
@@ -336,7 +336,7 @@ test('minimal navigation header is transparent without blur; playback header is 
     });
     assert.equal(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
     assert.match(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backgroundImage), /linear-gradient/);
-    assert.equal(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backdropFilter), 'none');
+    assert.equal(await page.locator('.skinHeader:not(.osdHeader)').evaluate(el => getComputedStyle(el).backdropFilter), 'blur(8px)');
     assert.equal(await page.locator('.osdHeader').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(10, 20, 30, 0.5)');
     await context.close();
 });
@@ -525,4 +525,93 @@ test('hero fits TV viewports, preserves slide transitions and leaves room for ho
         assert.ok(next.x > bar.x + bar.width / 2 && next.y > bar.y + bar.height / 2);
         await context.close();
     }
+});
+
+test('TV header wraps every library, separates page tabs and remains visible on scroll', async () => {
+    for (const width of [1920, 1280]) {
+        const {page, context} = await open({viewport:{width,height:1080}});
+        await page.evaluate(() => {
+            location.hash = '#/home.html';
+            const style = document.createElement('style');
+            style.textContent = 'html{font-size:32px}body{height:3000px}.skinHeader{position:absolute;transform:translateY(-100%)}.headerTabs{position:absolute;top:0;left:25%;width:50%;display:flex}.headerRight{width:10rem}.headerLeft{position:absolute}.headerTop{display:flex}.headerTabs button{font-size:1rem}';
+            document.head.appendChild(style);
+            document.body.insertAdjacentHTML('afterbegin', '<header class="skinHeader headroom--unpinned"><div class="headerTop"><div class="headerLeft"><h3 class="pageTitle">Startseite</h3></div><div class="headerRight">Search / User</div></div><div class="headerTabs"><button>Startseite</button><button>Favoriten</button></div></header><div class="mainDrawer" hidden><div class="libraryMenuOptions"></div></div>');
+            document.querySelector('.libraryMenuOptions').innerHTML = ['Anime','Filme','Live TV','Sammlungen','Serien'].map((label,i) => '<a class="navMenuOption" href="#/library?id='+i+'"><span class="navMenuOptionText">'+label+'</span></a>').join('');
+        });
+        await page.waitForSelector('.eftv-library-nav');
+        await page.waitForFunction(() => getComputedStyle(document.querySelector('.headerTabs')).display === 'none');
+        const nav = await page.locator('.eftv-library-nav').boundingBox();
+        for (const link of await page.locator('.eftv-library-nav a').all()) {
+            const box = await link.boundingBox();
+            assert.ok(box.x >= nav.x && box.x + box.width <= nav.x + nav.width + 1, await link.textContent());
+        }
+        await page.evaluate(() => window.scrollTo(0, 300));
+        assert.equal((await page.locator('.skinHeader').boundingBox()).y, 0);
+        await page.evaluate(() => location.hash = '#/livetv');
+        await page.waitForFunction(() => !document.querySelector('.skinHeader').hasAttribute('data-eftv-home-tabs'));
+        const tabs = await page.locator('.headerTabs').boundingBox();
+        const top = await page.locator('.headerTop').boundingBox();
+        assert.ok(tabs.y >= top.y + top.height - 1);
+        await page.waitForFunction(() => parseFloat(document.documentElement.style.getPropertyValue('--eftv-header-height')) === Math.ceil(document.querySelector('.skinHeader').getBoundingClientRect().height));
+        await page.evaluate(() => window.ElegantFinTv.dispose());
+        assert.equal(await page.locator('.skinHeader').getAttribute('data-eftv-home-tabs'), null);
+        assert.equal(await page.locator('html').evaluate(el => el.style.getPropertyValue('--eftv-header-height')), '');
+        await context.close();
+    }
+});
+
+test('native non-animated TV card borders and grey image corners are removed', async () => {
+    const {page, context} = await open();
+    await page.addStyleTag({content: `
+        html{font-size:32px}
+        .card.show-focus:not(.show-animation) .cardBox.visualCardBox,
+        .card.show-focus:not(.show-animation) .cardBox:not(.visualCardBox) .cardScalable{border:.5em solid transparent;border-radius:.7em}
+        .card:focus .cardScalable,.card:focus .cardBox.visualCardBox{border-color:cyan}
+        .cardBox:not(.visualCardBox) .cardPadder{background:#242424;border-radius:.2em}
+        .cardScalable{width:200px;height:120px}.cardPadder{width:100%;height:100%}
+    `});
+    for (const visual of [false, true]) {
+        await page.evaluate(visual => {
+            document.getElementById('native-card')?.remove();
+            const card = document.createElement('div');
+            card.id='native-card';card.className='card show-focus';card.tabIndex=0;
+            card.innerHTML='<div class="cardBox '+(visual?'visualCardBox':'')+'"><div class="cardScalable"><div class="cardPadder"><canvas class="blurhash-canvas"></canvas></div><a class="cardImageContainer" href="#/details">Poster</a></div></div>';
+            document.body.appendChild(card);
+        }, visual);
+        await page.locator('#native-card').focus();
+        const border = await page.locator(visual ? '#native-card .cardBox' : '#native-card .cardScalable').evaluate(el => getComputedStyle(el).borderTopWidth);
+        assert.equal(border, '0px');
+        assert.equal(await page.locator('#native-card .cardScalable').evaluate(el => getComputedStyle(el).outlineWidth), '1px');
+        const radius = await page.locator('#native-card .cardScalable').evaluate(el => getComputedStyle(el).borderTopLeftRadius);
+        for (const selector of ['.cardPadder','.cardImageContainer','.blurhash-canvas']) {
+            assert.equal(await page.locator('#native-card '+selector).evaluate(el => getComputedStyle(el).borderTopLeftRadius), radius);
+        }
+        assert.equal(await page.locator('#native-card .cardScalable').evaluate(el => getComputedStyle(el).overflow), 'hidden');
+    }
+    await context.close();
+});
+
+test('TV-size Media Bar controls stay separated and selected actions are not clipped', async () => {
+    const {page, context} = await open({viewport:{width:1920,height:1080}});
+    await page.addStyleTag({content: `html{font-size:32px}
+        .layout-tv #slides-container .arrow{position:absolute;width:4.5rem;height:4.5rem;min-width:5rem}
+        .pause-button,.volume-toggle,.ss-settings-toggle{position:absolute;width:3rem;height:3rem}
+        .pause-button{right:.8rem}.volume-toggle{right:3.5rem}.ss-settings-toggle{right:4rem}
+        .slide-content{position:absolute;overflow:hidden}.play-button:focus{transform:scale(1.2);box-shadow:0 0 0 8px cyan}
+    `});
+    await page.evaluate(() => {
+        document.querySelector('#one').innerHTML='<div class="slide-content"><div class="button-container"><button class="play-button">Play</button><button class="detail-button">Info</button><button class="favorite-button">Favorite</button></div></div>';
+        document.querySelector('#slides-container').insertAdjacentHTML('beforeend','<button class="arrow left-arrow">Left</button><button class="arrow right-arrow">Right</button><button class="pause-button">Pause</button><button class="volume-toggle">Mute</button><button class="ss-settings-toggle">Settings</button>');
+    });
+    const boxes = {};
+    for (const name of ['left-arrow','right-arrow','ss-settings-toggle','volume-toggle','pause-button']) boxes[name] = await page.locator('.'+name).boundingBox();
+    for (const [a,b] of [['left-arrow','right-arrow'],['ss-settings-toggle','volume-toggle'],['volume-toggle','pause-button']]) {
+        assert.ok(boxes[a].x + boxes[a].width < boxes[b].x, a+' / '+b);
+        assert.equal(boxes[a].width, boxes[b].width);
+    }
+    await page.locator('#one .play-button').focus();
+    assert.equal(await page.locator('#one .play-button').evaluate(el => getComputedStyle(el).transform), 'none');
+    assert.equal(await page.locator('#one .slide-content').evaluate(el => getComputedStyle(el).overflow), 'visible');
+    assert.equal(await page.locator('#one .play-button').evaluate(el => getComputedStyle(el).outlineOffset), '-2px');
+    await context.close();
 });

@@ -1,5 +1,15 @@
 # Analyse und Grenzen
 
+## Korrekturen 0.1.7.0 und Media Bar 3.0.0.3
+
+Die TV-Fotos zeigen überlagernde `.headerTabs`, eine abgeschnittene letzte Bibliothek, überlappende Media-Bar-Pfeile und weiterhin breite türkisfarbene Kartenrahmen. Die bisherige Test-Fixture enthielt weder die native TV-Rahmenregel noch die großen TV-Pfeile und die absolut positionierten Kopfzeilen-Tabs. Die neuen Regressionstests enthalten diese konkurrierenden Regeln und prüfen ihre tatsächliche berechnete Geometrie bei großen Schriften.
+
+Jellyfin verwendet für `.card.show-focus:not(.show-animation)` einen 0,5-em-Rahmen an `.cardScalable` beziehungsweise `.cardBox.visualCardBox`. Die bisherige Schattenkorrektur reichte deshalb nicht aus. Die Kartenbreiten und native Zoomanimation bleiben erhalten; der zusätzliche Rahmen entfällt. Graue Platzhalter und Blurhash-Ebenen werden am gemeinsamen Bildradius beschnitten.
+
+Die Kopfzeile wird fest positioniert. Home-/Favoriten-Tabs werden nur auf diesen Routen ausgeblendet, andere Seiten-Tabs darunter angeordnet. Lange Bibliothekslisten umbrechen. Ein ResizeObserver erfasst nur die Kopfzeilenhöhe; kein Scroll-Polling. Die ausdrücklich gewünschte Unschärfe bleibt auf die Kopfzeile begrenzt. Deren tatsächliche Renderingkosten auf dem LG sind noch offen.
+
+In der lokalen und veröffentlichten Media Bar 3.0.0.2 wurde ein separater Fehler gefunden: `loadSlideshowData` stoppt den neu erzeugten `SlideTimer` und setzt `STATE.slideshow.slideInterval` auf `null`. Ein Regressionstest scheitert vor der Änderung genau an dieser fehlenden Referenz und besteht nach deren Erhalt. Die vorhandene `updateCurrentSlide`-Logik darf den Timer dadurch wieder starten. Kein zusätzlicher Timer im Theme und keine Änderung an der Trailer-Endelogik. Für die Media-Bar-Korrektur wird ein isolierter Checkout unter `.tools/media-bar-fix` verwendet; das ursprüngliche lokale Projekt bleibt unverändert.
+
 ## Verfeinerung 0.1.6.0 nach positivem TV-Test
 
 Der Nutzer meldet für das schlanke Design deutlich bessere Performance. Gewünscht sind nun ein dünner weißer Fokusrahmen, eine eingerückte Media Bar und eine transparente Navigation mit Bibliothekslinks entsprechend drei Browser-Referenzbildern. Umsetzung im schlanken Profil: 1-Pixel-Fokuslinie, Entfernung des zusätzlichen Kartenbox-Fokusschattens, Media-Bar-Geometrie und statische Transparenz ohne Blur. Layoutklassen, Kartenbreiten und Jellyfins Bewegungen bleiben erhalten.

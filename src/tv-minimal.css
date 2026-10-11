@@ -12,8 +12,11 @@
     --eftv-focus: #fff;
     --eftv-focus-width: 1px;
     --eftv-page-gutter: 2.4vw;
-    --eftv-hero-top: 5rem;
+    --eftv-hero-top: calc(var(--eftv-header-height, 4rem) + 1rem);
     --eftv-hero-height: 62vh;
+    --eftv-bar-control-size: 2.5rem;
+    --eftv-bar-control-gap: .5rem;
+    --eftv-bar-control-edge: 1rem;
     color-scheme: dark;
     color: var(--textColor);
     font-family: Inter, sans-serif;
@@ -30,13 +33,18 @@
     color: var(--textColor);
 }
 
-/* Transparent navigation with a static readability gradient, without blur.
+/* Transparent navigation with blur limited to the header surface.
  * Playback controls retain their native treatment. */
 :root[data-eftv] :is(.skinHeader:not(.osdHeader), .MuiAppBar-root:not(.osdHeader)) {
     background: linear-gradient(to bottom, rgba(17, 24, 39, .88), rgba(17, 24, 39, .35) 65%, transparent) !important;
     box-shadow: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
 }
 
 :root[data-eftv] :is(.sectionTitle, .pageTitle, .detailPagePrimaryContainer h1) {
@@ -183,6 +191,9 @@
     width: 40% !important;
     max-height: calc(100% - 5rem) !important;
     gap: .75rem;
+    overflow: visible !important;
+    padding: .25rem;
+    box-sizing: border-box;
 }
 
 :root[data-eftv] #slides-container .slide-content .logo-container {
@@ -259,9 +270,39 @@
     opacity: 1;
 }
 
-:root[data-eftv] #slides-container .right-arrow { right: .8rem !important; }
-:root[data-eftv] #slides-container .left-arrow { right: 4rem !important; }
-:root[data-eftv] #slides-container :is(.pause-button, .volume-toggle, .ss-settings-toggle) { top: 1rem !important; }
+:root[data-eftv] #slides-container :is(.arrow, .pause-button, .volume-toggle, .mute-button, .ss-settings-toggle) {
+    width: var(--eftv-bar-control-size) !important;
+    height: var(--eftv-bar-control-size) !important;
+    min-width: var(--eftv-bar-control-size) !important;
+    min-height: var(--eftv-bar-control-size) !important;
+    box-sizing: border-box;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+:root[data-eftv] #slides-container .right-arrow { right: var(--eftv-bar-control-edge) !important; }
+:root[data-eftv] #slides-container .left-arrow { right: calc(var(--eftv-bar-control-edge) + var(--eftv-bar-control-size) + var(--eftv-bar-control-gap)) !important; }
+:root[data-eftv] #slides-container :is(.pause-button, .volume-toggle, .mute-button, .ss-settings-toggle) {
+    position: absolute;
+    top: var(--eftv-bar-control-edge) !important;
+    left: auto !important;
+    transform: none !important;
+}
+:root[data-eftv] #slides-container .pause-button { right: var(--eftv-bar-control-edge) !important; }
+:root[data-eftv] #slides-container :is(.volume-toggle, .mute-button) { right: calc(var(--eftv-bar-control-edge) + var(--eftv-bar-control-size) + var(--eftv-bar-control-gap)) !important; }
+:root[data-eftv] #slides-container .ss-settings-toggle { right: calc(var(--eftv-bar-control-edge) + (var(--eftv-bar-control-size) + var(--eftv-bar-control-gap)) * 2) !important; }
+:root[data-eftv] #slides-container :is(.arrow, .pause-button, .volume-toggle, .mute-button, .ss-settings-toggle) .material-icons { font-size: 1.4rem !important; }
+:root[data-eftv] #slides-container .button-container {
+    overflow: visible !important;
+    padding: .25rem;
+    gap: .75rem;
+}
+:root[data-eftv] #slides-container :is(.play-button, .detail-button, .favorite-button):focus {
+    transform: none !important;
+    box-shadow: none !important;
+    outline-offset: -2px !important;
+}
 
 /* Media Bar positions itself absolutely; reserve its space above home rows.
  * Its page-offset variable accounts for the native page/header top padding. */
@@ -276,9 +317,10 @@
     display: flex;
     align-items: center;
     gap: .5rem;
+    flex-wrap: wrap;
     flex: 1 1 auto;
     min-width: 0;
-    overflow-x: auto;
+    overflow: visible;
     scrollbar-width: none;
     padding: .3rem;
 }
@@ -287,6 +329,26 @@
 :root[data-eftv] .skinHeader[data-eftv-navigation] .headerLeft { flex: 0 0 auto; }
 :root[data-eftv] .skinHeader[data-eftv-navigation] .headerRight { flex: 0 0 auto; }
 :root[data-eftv] .skinHeader[data-eftv-navigation] .headerTop { gap: .75rem; }
+:root[data-eftv] .skinHeader[data-eftv-navigation] .headerTop {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+}
+:root[data-eftv] .skinHeader[data-eftv-navigation] {
+    display: flex;
+    flex-direction: column;
+}
+:root[data-eftv] .skinHeader[data-eftv-navigation] :is(.headerLeft, .headerRight) {
+    position: static !important;
+}
+:root[data-eftv] .skinHeader[data-eftv-navigation] .headerTabs {
+    position: static !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0 !important;
+}
+:root[data-eftv] .skinHeader[data-eftv-home-tabs] .headerTabs { display: none !important; }
 :root[data-eftv] .skinHeader[data-eftv-navigation] .pageTitle { display: none; }
 
 :root[data-eftv] .eftv-library-nav a,
@@ -295,13 +357,14 @@
     align-items: center;
     flex: 0 0 auto;
     gap: .5rem;
-    padding: .4rem .9rem;
+    padding: .35rem .55rem;
     background: rgba(17, 24, 39, .9);
     color: var(--textColor);
     border-radius: 999px;
     text-decoration: none;
     white-space: nowrap;
     font: inherit;
+    font-size: .8rem;
 }
 
 :root[data-eftv] .eftv-library-nav .eftv-brand {
@@ -337,3 +400,16 @@
 :root[data-eftv] .card:focus-within .cardBox {
     box-shadow: none !important;
 }
+
+/* Native TV cards without zoom use a 0.5em border, not a focus shadow. */
+:root[data-eftv] .card.show-focus:not(.show-animation) .cardBox.visualCardBox,
+:root[data-eftv] .card.show-focus:not(.show-animation) .cardBox:not(.visualCardBox) .cardScalable {
+    border: 0 !important;
+}
+
+/* Clip all image layers to the same curve, including the native grey padder. */
+:root[data-eftv] .cardScalable { overflow: hidden; }
+:root[data-eftv] .cardScalable :is(.cardPadder, .cardImageContainer, .cardOverlayContainer, .blurhash-canvas, .cardImage) {
+    border-radius: inherit !important;
+}
+:root[data-eftv] .cardBox:not(.visualCardBox) .cardPadder { box-shadow: none !important; }

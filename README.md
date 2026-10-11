@@ -2,7 +2,25 @@
 
 Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Übernimmt die Gestaltung aus den drei bereitgestellten CSS-Dateien, aktiviert sie auf TVs und ergänzt Fokusbedienung für eine vorhandene Media Bar.
 
-**Status: Version 0.1.6.0 verfeinert das schlanke TV-Design anhand der Browser-Referenzbilder.** Mit Version 0.1.5.0 meldet der Nutzer deutlich bessere Performance. Die neuen Anpassungen sind lokal geprüft; Darstellung und Geschwindigkeit auf dem LG müssen erneut geprüft werden. Installation über den Plugin-Katalog oder die Pakete im [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.6).
+**Status: Version 0.1.7.0 korrigiert die nach dem TV-Test gemeldeten Darstellungsfehler.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.7). Der automatische Vorschauwechsel benötigt zusätzlich **Media Bar 3.0.0.3** aus dessen eigenem Repository.
+
+## Update 0.1.7.0: Korrekturen nach TV-Rückmeldung
+
+- Auf Startseite und Favoriten entfallen die doppelten nativen Kopfzeilen-Tabs. Bibliotheks-Tabs, etwa Live-TV-Programme und Aufnahmen, stehen in einer separaten Zeile darunter.
+- Bibliothekslinks umbrechen bei Platzmangel vollständig in eine weitere Zeile. Die Höhe der Kopfzeile wird bei Größenänderungen erfasst und für den Abstand zur Media Bar verwendet.
+- Die Kopfzeile bleibt beim Scrollen oben sichtbar. Die gewünschte Hintergrundunschärfe ist auf diese kleine Fläche begrenzt (8 px); ihre Performance auf dem LG muss erneut geprüft werden.
+- Obere Media-Bar-Schaltflächen und die beiden Pfeile erhalten einheitliche Größen und daraus berechnete Abstände. Selektierte Play-/Info-/Favoriten-Schaltflächen werden nicht mehr durch den Inhaltscontainer abgeschnitten.
+- Der native TV-Kartenrahmen von 0,5 em wird entfernt. Eine einzelne weiße 1-Pixel-Linie bleibt sichtbar. Bild, grauer Platzhalter und Blurhash-Ebene erhalten dieselben Rundungen und werden am Bildcontainer beschnitten.
+
+Der stehende Vorschauwechsel hat eine separate Ursache: Media Bar 3.0.0.2 stoppt nach dem Laden den Timer und setzt die Referenz auf `null`. Der Timer kann danach nicht wieder gestartet werden. **Media Bar 3.0.0.3** behält ihn für den vorgesehenen Start nach dem Rendern beziehungsweise nach einem fehlgeschlagenen Trailer. Die Korrektur liegt im Media-Bar-Plugin, nicht in einem zusätzlichen Theme-Timer.
+
+Beide Plugins aktualisieren: **ElegantFin TV 0.1.7.0** und **Media Bar 3.0.0.3**. Danach Server und TV-App vollständig neu starten. Die vorhandenen Repository-Links bleiben gültig. Falls das Media-Bar-Repository fehlt, unter Plugins → Repositorys ergänzen:
+
+```text
+https://github.com/S3NTIN3LOne/jellyfin-plugins/releases/latest/download/manifest.json
+```
+
+Geprüft: 27 Frontendchecks, Serverchecks und Release-Build; zusätzlich 8 Media-Bar-Tests einschließlich Timer-Erhalt, mehrfacher Fortschaltung, Pause, Trailerende und Seitensichtbarkeit. Die Oberflächentests berücksichtigen große TV-Schriften, native Kartenrahmen, überlagernde Seiten-Tabs und native große Pfeilbuttons. Eine Prüfung direkt auf dem LG steht aus.
 
 ## Update 0.1.6.0: Fokus, Media Bar und Navigation
 
@@ -118,7 +136,7 @@ Das Repository und die Release-Downloads sind öffentlich erreichbar. Das Katalo
 
 1. Im Jellyfin-Dashboard die Serverversion **12.2.0** prüfen. Das Paket ist gegen diese API gebaut; andere Versionen sind nicht freigegeben.
 2. Eine zu Jellyfin 12.2 passende Version von [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) muss installiert sein. Bei einer Media-Bar-Installation kann sie bereits vorhanden sein. Das Plugin enthält diese Abhängigkeit nicht.
-3. Das Paket `artifacts/ElegantFinTV-0.1.6-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.6.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
+3. Das Paket `artifacts/ElegantFinTV-0.1.7-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.7.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
 4. Server starten. Im Dashboard unter Plugins **ElegantFin TV** öffnen. Standard: aktiviert, TV-Profil, Media-Bar-Adapter an, „Auch auf Desktop und Mobilgeräten“ aus.
 5. Die drei bisherigen CSS-Einbindungen können für den ersten TV-Test bestehen bleiben: Sie schließen `layout-tv` bereits aus. Die Dateien selbst müssen nicht bearbeitet werden. In der LG-App TV-Layout verwenden und die App vollständig schließen/neu starten, damit `index.html` neu angefordert wird.
 6. Das vorhandene Media-Bar-Plugin installiert lassen. ElegantFin TV lädt **keine zweite Media Bar** und ersetzt nicht deren Wiedergabe-, Favoriten-, Playlist- oder Trailerlogik.
