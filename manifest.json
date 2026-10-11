@@ -5,12 +5,12 @@
         "description":  "Minimal ElegantFin design with native Jellyfin motion and Media Bar focus support. Requires a compatible File Transformation plugin. LG C4 integration still requires on-device verification.",
         "versions":  [
                          {
-                             "changelog":  "Fix overlapping page tabs, clipped library navigation, native thick TV borders and grey poster corners. Keep header fixed with limited blur; separate Media Bar controls and prevent clipped action focus. Automatic slideshow fix requires Media Bar 3.0.0.3.",
-                             "version":  "0.1.7.0",
-                             "checksum":  "be4c6c21575c04f5c9ed086b9c2b5e33",
-                             "timestamp":  "2026-10-11T12:04:46Z",
+                             "changelog":  "Respect Media Bar TV height for the hero and following rows. Improve poster focus contrast with a 3px white outline and a dark edge. Fade header backdrop blur below the navigation.",
+                             "version":  "0.1.8.0",
+                             "checksum":  "74469eba0baaf699c9540701d7d322a9",
+                             "timestamp":  "2026-10-11T12:18:58Z",
                              "targetAbi":  "12.2.0.0",
-                             "sourceUrl":  "https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.7/ElegantFinTV-0.1.7-jf12.2-catalog.zip"
+                             "sourceUrl":  "https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.8/ElegantFinTV-0.1.8-jf12.2-catalog.zip"
                          }
                      ],
         "category":  "General",
