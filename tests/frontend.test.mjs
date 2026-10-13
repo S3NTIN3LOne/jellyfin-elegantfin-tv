@@ -344,7 +344,7 @@ test('minimal navigation header blurs only its fixed surface; playback header is
     });
     assert.equal(fade.blur, 'blur(8px)');
     assert.match(fade.mask, /linear-gradient.*rgba\(0, 0, 0, 0\)/);
-    assert.equal(fade.bottom, '-32px');
+    assert.equal(fade.bottom, '0px');
     assert.equal(fade.pointer, 'none');
     assert.equal(await page.locator('.osdHeader').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(10, 20, 30, 0.5)');
     await context.close();
@@ -554,10 +554,15 @@ test('Media Bar height setting keeps the following rows at a constant gap', asyn
                 if (height) document.documentElement.style.setProperty('--slideshow-tv-height', height+'vh');
                 else document.documentElement.style.removeProperty('--slideshow-tv-height');
             }, height);
+            await page.waitForFunction(() => {
+                const bar = document.getElementById('slides-container').getBoundingClientRect();
+                const rows = document.querySelector('.homeSectionsContainer').getBoundingClientRect();
+                return Math.abs(rows.top - bar.bottom - 12) < 1;
+            });
             const bar = await page.locator('#slides-container').boundingBox();
             const rows = await page.locator('.homeSectionsContainer').boundingBox();
             assert.ok(Math.abs(bar.height - viewport.height * (height || 62) / 100) < 1);
-            assert.ok(Math.abs(rows.y - bar.y - bar.height - 32) < 1, 'gap must not grow when bar height decreases');
+            assert.ok(Math.abs(rows.y - bar.y - bar.height - 12) < 1, 'gap must not grow when bar height decreases');
         }
         await context.close();
     }
@@ -649,5 +654,89 @@ test('TV-size Media Bar controls stay separated and selected actions are not cli
     assert.equal(await page.locator('#one .play-button').evaluate(el => getComputedStyle(el).transform), 'none');
     assert.equal(await page.locator('#one .slide-content').evaluate(el => getComputedStyle(el).overflow), 'visible');
     assert.equal(await page.locator('#one .play-button').evaluate(el => getComputedStyle(el).outlineOffset), '-2px');
+    await context.close();
+});
+
+test('actual home content position includes nested page padding and late section titles', async () => {
+    const {page, context} = await open({viewport:{width:1920,height:1080}});
+    await page.evaluate(() => {
+        document.querySelector('head style').remove();
+        document.body.innerHTML = '<div class="page"><div class="scrollFrame"><div class="homeSectionsContainer"><div class="verticalSection"><h2 class="sectionTitle">My media</h2><div style="height:1000px">Cards</div></div></div></div></div><div id="slides-container"></div>';
+        document.documentElement.style.setProperty('--slideshow-page-offset', '0px');
+        document.documentElement.style.setProperty('--slideshow-tv-height', '40vh');
+    });
+    await page.addStyleTag({content:`body{margin:0;padding:0}.page{padding-top:100px}
+        .scrollFrame{height:850px;overflow:auto;padding-top:170px;box-sizing:border-box}
+        .homeSectionsContainer{display:flow-root;padding-top:50px}
+        .verticalSection{padding-top:40px}.sectionTitle{margin:0;padding-top:20px;font-size:24px}
+        #slides-container{position:absolute}
+    `});
+    const waitGap = () => page.waitForFunction(() => {
+        const title = document.querySelector('.sectionTitle');
+        const frame = document.querySelector('.scrollFrame');
+        const bottom = document.getElementById('slides-container').getBoundingClientRect().bottom;
+        return Math.abs(title.getBoundingClientRect().top + 20 + frame.scrollTop - bottom - 12) < 1;
+    });
+    await waitGap();
+    await page.evaluate(() => document.querySelector('.scrollFrame').scrollTop = 120);
+    await page.evaluate(() => document.documentElement.style.setProperty('--slideshow-tv-height', '30vh'));
+    await waitGap();
+    await page.evaluate(() => {
+        document.querySelector('.verticalSection').style.paddingTop = '90px';
+        document.querySelector('.sectionTitle').textContent = 'Recently added';
+    });
+    await waitGap();
+    const before = await page.locator('.homeSectionsContainer').getAttribute('style');
+    await page.waitForTimeout(150);
+    assert.equal(await page.locator('.homeSectionsContainer').getAttribute('style'), before, 'layout correction settles');
+    await page.evaluate(() => window.ElegantFinTv.dispose());
+    assert.equal(await page.locator('.homeSectionsContainer').evaluate(el => el.style.getPropertyValue('--eftv-rows-margin')), '');
+    await context.close();
+});
+
+test('Up enters Media Bar from the first row and Down returns without stealing lower-row navigation', async () => {
+    const {page, context} = await open();
+    await page.evaluate(() => {
+        document.body.insertAdjacentHTML('beforeend', '<div class="homeSectionsContainer"><div class="itemsContainer focuscontainer-x"><button class="card" tabindex="0" id="first-card">First</button><button class="card" tabindex="0" id="second-card">Second</button></div><div class="itemsContainer"><button class="card" tabindex="0" id="lower-card">Lower</button></div></div>');
+        window.nativeKeys = [];
+        document.addEventListener('keydown', e => window.nativeKeys.push(e.key));
+    });
+    await page.locator('#second-card').focus();
+    await page.keyboard.press('ArrowUp');
+    assert.equal(await page.locator('#one .play-button').evaluate(el => el === document.activeElement), true);
+    await page.keyboard.press('ArrowDown');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'second-card');
+    assert.deepEqual(await page.evaluate(() => window.nativeKeys), []);
+    await page.locator('#lower-card').focus();
+    await page.keyboard.press('ArrowUp');
+    assert.deepEqual(await page.evaluate(() => window.nativeKeys), ['ArrowUp']);
+    await page.evaluate(() => window.ElegantFinTv.dispose());
+    await page.locator('#first-card').focus();
+    await page.keyboard.press('ArrowUp');
+    assert.deepEqual(await page.evaluate(() => window.nativeKeys), ['ArrowUp','ArrowUp']);
+    await context.close();
+});
+
+test('native header paint containment and TV focus zoom cannot clip the revised effects', async () => {
+    const {page, context} = await open();
+    await page.addStyleTag({content: `
+        .skinHeader{contain:layout style paint;height:130px}
+        .headerTop{height:65px;overflow:hidden}.headerTabs{height:65px;overflow:hidden}
+        .paper-icon-button-light{width:60px;height:60px;border-radius:50%}
+        .paper-icon-button-light.show-focus:focus{transform:scale(1.3)}
+        .emby-tab-button.show-focus:focus{transform:scale(1.3)!important;background:transparent!important}
+        .emby-tab-button{height:60px}
+        .clip-row{overflow:hidden;width:200px}.cardScalable{height:150px;width:200px;background:white}
+    `});
+    await page.evaluate(() => document.body.insertAdjacentHTML('beforeend', '<header class="skinHeader"><div class="headerTop"><button class="paper-icon-button-light show-focus">Back</button></div><div class="headerTabs"><button class="emby-tab-button show-focus emby-tab-button-active">Movies</button></div></header><div class="clip-row"><div class="card show-focus" tabindex="0"><div class="cardScalable">Poster</div></div></div>'));
+    assert.equal(await page.locator('.skinHeader').evaluate(el => getComputedStyle(el).contain), 'layout style');
+    assert.equal(await page.locator('.skinHeader').evaluate(el => getComputedStyle(el,'::before').bottom), '0px');
+    for (const name of ['.paper-icon-button-light','.emby-tab-button']) {
+        await page.locator(name).focus();
+        assert.equal(await page.locator(name).evaluate(el => getComputedStyle(el).transform), 'none');
+        assert.equal(await page.locator(name).evaluate(el => getComputedStyle(el).outlineOffset), '-3px');
+    }
+    await page.locator('.clip-row .card').focus();
+    assert.equal(await page.locator('.clip-row .cardScalable').evaluate(el => getComputedStyle(el).outlineOffset), '-3px');
     await context.close();
 });

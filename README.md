@@ -2,7 +2,17 @@
 
 Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Übernimmt die Gestaltung aus den drei bereitgestellten CSS-Dateien, aktiviert sie auf TVs und ergänzt Fokusbedienung für eine vorhandene Media Bar.
 
-**Status: Version 0.1.8.0 berücksichtigt die TV-Bar-Height, verbessert den Auswahlrahmen und blendet die Header-Unschärfe weich aus.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.8). Für den automatischen Vorschauwechsel weiterhin **Media Bar 3.0.0.3** verwenden.
+**Status: Version 0.1.9.0 korrigiert beschnittene Fokusmarkierungen, den Übergang zur Media Bar, verschachtelte Seitenabstände und den Header-Verlauf.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.9). Für den automatischen Vorschauwechsel weiterhin **Media Bar 3.0.0.3** verwenden.
+
+## Update 0.1.9.0: Scrollcontainer und Bibliotheksnavigation
+
+- Der weiße 3-Pixel-Kartenrahmen liegt innerhalb des Bildes. Dadurch kann der Scrollcontainer ihn am linken Rand nicht mehr abschneiden. Bibliotheksbuttons erhalten ebenfalls einen innenliegenden Fokus.
+- Pfeil nach oben aus der obersten Startseitenreihe führt direkt zum sichtbaren Play-Button der Media Bar. Pfeil nach unten aus den unteren Bar-Aktionen führt zum zuvor ausgewählten Element zurück. Die Navigation zwischen tieferen Reihen bleibt nativ. Dafür muss der Media-Bar-Adapter eingeschaltet sein.
+- Der Abstand zur ersten sichtbaren Startseitenüberschrift wird anhand ihrer tatsächlichen Position zur Bar korrigiert, einschließlich verschachtelter Seitenabstände und Überschriften-Padding. Der Zielabstand beträgt 0,75 rem. Größenänderungen und nachgeladene Abschnitte werden ereignisgesteuert berücksichtigt; es gibt keine laufende Messschleife beim Scrollen.
+- Die native Kopfzeile verwendet `contain: paint`, das den bisherigen Verlauf abgeschnitten hat. Die Theme-Kopfzeile behält Layout-/Style-Containment, entfernt Paint-Containment und blendet die Unschärfe innerhalb der letzten 2 rem der Kopfzeile aus. Sie reicht nicht mehr unter die Kopfzeile in die Filter hinein.
+- Home-/Zurück-Buttons und Bibliotheks-Tabs erhalten einen innenliegenden Fokus ohne native Vergrößerung. Der aktive Tab behält eine eigene Hintergrundmarkierung; der Tastaturfokus bleibt davon unterscheidbar.
+
+ElegantFin TV aktualisieren, Server und TV-App vollständig neu starten. Media Bar bleibt auf 3.0.0.3. Die Änderungen gelten für das schlanke Standardprofil. Validiert: 31 Frontendtests, Serverchecks und Release-Build sowie Browser-Vorschauen mit beschnittenen Containern. Die konkrete Darstellung und Fernbedienung auf dem LG müssen noch geprüft werden.
 
 ## Update 0.1.8.0: Höhe, Fokus und weicher Header-Übergang
 
@@ -146,7 +156,7 @@ Das Repository und die Release-Downloads sind öffentlich erreichbar. Das Katalo
 
 1. Im Jellyfin-Dashboard die Serverversion **12.2.0** prüfen. Das Paket ist gegen diese API gebaut; andere Versionen sind nicht freigegeben.
 2. Eine zu Jellyfin 12.2 passende Version von [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) muss installiert sein. Bei einer Media-Bar-Installation kann sie bereits vorhanden sein. Das Plugin enthält diese Abhängigkeit nicht.
-3. Das Paket `artifacts/ElegantFinTV-0.1.8-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.8.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
+3. Das Paket `artifacts/ElegantFinTV-0.1.9-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.9.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
 4. Server starten. Im Dashboard unter Plugins **ElegantFin TV** öffnen. Standard: aktiviert, TV-Profil, Media-Bar-Adapter an, „Auch auf Desktop und Mobilgeräten“ aus.
 5. Die drei bisherigen CSS-Einbindungen können für den ersten TV-Test bestehen bleiben: Sie schließen `layout-tv` bereits aus. Die Dateien selbst müssen nicht bearbeitet werden. In der LG-App TV-Layout verwenden und die App vollständig schließen/neu starten, damit `index.html` neu angefordert wird.
 6. Das vorhandene Media-Bar-Plugin installiert lassen. ElegantFin TV lädt **keine zweite Media Bar** und ersetzt nicht deren Wiedergabe-, Favoriten-, Playlist- oder Trailerlogik.

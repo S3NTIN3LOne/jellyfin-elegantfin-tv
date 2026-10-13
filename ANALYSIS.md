@@ -1,5 +1,13 @@
 # Analyse und Grenzen
 
+## Korrekturen 0.1.9.0
+
+Die vorherigen Tests hatten native Clipping- und Seitencontainer nicht ausreichend abgebildet. Jellyfin-Web (Referenzcommit `fb9fff44b0c1280d44c8364577383d47e40c7bc2`, `src/styles/librarybrowser.scss`) setzt auf `.skinHeader` tatsächlich `contain: layout style paint`. `overflow: visible` allein hebt dieses Clipping nicht auf. Die korrigierte Ebene bleibt innerhalb der Headerhöhe und blendet nach unten aus; Paint-Containment entfällt. Die nativen 1,3-fachen Fokusvergrößerungen von Iconbuttons und Tabs werden nur im Header durch innenliegende Ringe ersetzt. Karten behalten ihren nativen Zoom, der Ring liegt jetzt innen.
+
+Media Bar hängt `#slides-container` direkt an `body`; die Startseitenkarten liegen dagegen in Jellyfins Seiten-/Fokuscontainern. Eine gezielte Capture-Behandlung verbindet nur die oberste Kartenreihe mit der Bar und bietet einen Rückweg zum Ausgangselement. Modifizierte Tasten, Dialoge, Formulare und tiefere Reihen werden nicht übernommen.
+
+Die feste Abstandsformel mit `--slideshow-page-offset` berücksichtigt verschachteltes Padding und Abschnittsüberschriften nicht zuverlässig. Eine zusätzliche, auf das schlanke Theme begrenzte Layoutkorrektur verwendet die gerenderten Positionen, rechnet Scrollpositionen der Vorfahren heraus und aktualisiert eine eigene CSS-Variable am sichtbaren Reihencontainer. ResizeObserver und relevante DOM-/Seitenereignisse lösen die Korrektur aus; eigene Styles werden beim Abschalten zurückgenommen. Tests decken verschachteltes Padding, verspätete Titel, Größenänderungen während des Scrollens und das Einpendeln ohne erneute Styleänderungen ab. Ein Zugriff auf den laufenden TV-Client liegt nicht vor.
+
 ## Korrekturen 0.1.8.0
 
 Das minimale Theme reservierte unabhängig von der Media-Bar-Einstellung 62 vh. Höhe und Reihenabstand lesen jetzt gemeinsam `--slideshow-tv-height`, das Media Bar auf dem Dokument veröffentlicht. Der Regressionstest verändert diese Einstellung mehrfach und prüft den konstanten Abstand mit dem nativen Seitenoffset.

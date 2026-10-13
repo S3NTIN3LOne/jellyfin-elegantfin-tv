@@ -41,6 +41,8 @@
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     isolation: isolate;
+    /* Native skinHeader uses paint containment, which clips blur and focus. */
+    contain: layout style !important;
     overflow: visible !important;
     position: fixed !important;
     top: 0 !important;
@@ -53,7 +55,7 @@
 :root[data-eftv] :is(.skinHeader:not(.osdHeader), .MuiAppBar-root:not(.osdHeader))::before {
     content: "";
     position: absolute;
-    inset: 0 0 -2rem;
+    inset: 0;
     z-index: -1;
     pointer-events: none;
     background: linear-gradient(to bottom, rgba(17, 24, 39, .88), rgba(17, 24, 39, .35));
@@ -126,8 +128,8 @@
 :root[data-eftv] .card:focus .cardScalable,
 :root[data-eftv] .card:focus-within .cardScalable {
     outline: 3px solid var(--eftv-focus) !important;
-    outline-offset: 0 !important;
-    box-shadow: 0 0 0 4px #111827 !important;
+    outline-offset: -3px !important;
+    box-shadow: none !important;
 }
 
 :root[data-eftv] .card:has(.cardScalable):focus,
@@ -325,7 +327,7 @@
  * Its page-offset variable accounts for the native page/header top padding. */
 :root[data-eftv] body:has(#slides-container:not(.hide):not([hidden])) .homeSectionsContainer {
     top: 0 !important;
-    margin-top: calc(var(--eftv-hero-top) + var(--eftv-hero-height) + 2rem - var(--slideshow-page-offset, 0px)) !important;
+    margin-top: var(--eftv-rows-margin, calc(var(--eftv-hero-top) + var(--eftv-hero-height) + .75rem - var(--slideshow-page-offset, 0px))) !important;
 }
 
 /* MUI already supplies library buttons. The classic TV header receives links
@@ -367,6 +369,28 @@
 }
 :root[data-eftv] .skinHeader[data-eftv-home-tabs] .headerTabs { display: none !important; }
 :root[data-eftv] .skinHeader[data-eftv-navigation] .pageTitle { display: none; }
+
+/* Keep focus inside the controls: native TV zoom can escape the tab scroller. */
+:root[data-eftv] .skinHeader:not(.osdHeader) :is(.paper-icon-button-light, .emby-tab-button):focus {
+    transform: none !important;
+    outline: 2px solid #fff !important;
+    outline-offset: -3px !important;
+    box-shadow: none !important;
+    background: #29364f !important;
+    color: #fff !important;
+}
+:root[data-eftv] .skinHeader:not(.osdHeader) .emby-tab-button {
+    border-radius: .4rem;
+    padding: .65em 1em;
+}
+:root[data-eftv] .skinHeader:not(.osdHeader) .emby-tab-button-active {
+    color: #fff;
+    background: rgba(93, 85, 231, .25);
+}
+:root[data-eftv] .homeLibraryButton:focus {
+    outline-offset: -3px !important;
+    transform: none !important;
+}
 
 :root[data-eftv] .eftv-library-nav a,
 :root[data-eftv] .MuiAppBar-root .MuiButton-text:not(.MuiButtonGroup-grouped) {

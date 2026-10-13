@@ -2,13 +2,13 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$inputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.8-jf12.2.zip'
-$outputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.8-jf12.2-catalog.zip'
+$inputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.9-jf12.2.zip'
+$outputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.9-jf12.2-catalog.zip'
 $inputZip = [IO.Compression.ZipFile]::OpenRead($inputPath)
 $outputStream = [IO.File]::Open($outputPath, [IO.FileMode]::Create)
 $outputZip = [IO.Compression.ZipArchive]::new($outputStream, [IO.Compression.ZipArchiveMode]::Create)
 try {
-    $prefix = 'ElegantFinTV_0.1.8.0/'
+    $prefix = 'ElegantFinTV_0.1.9.0/'
     foreach ($entry in $inputZip.Entries) {
         if (!$entry.FullName.StartsWith($prefix)) { throw 'Unexpected manual-package structure' }
         $name = $entry.FullName.Substring($prefix.Length)
@@ -28,10 +28,10 @@ $manifest = @(@{
     owner = 'S3NTIN3LOne'
     category = 'General'
     versions = @(@{
-        version = '0.1.8.0'
-        changelog = 'Respect Media Bar TV height for the hero and following rows. Improve poster focus contrast with a 3px white outline and a dark edge. Fade header backdrop blur below the navigation.'
+        version = '0.1.9.0'
+        changelog = 'Keep card and header focus inside clipping boundaries. Add direct Up/Down navigation between Media Bar and the first home row. Measure actual section spacing including nested page padding. Remove native header paint clipping and finish the blur fade above library filters.'
         targetAbi = '12.2.0.0'
-        sourceUrl = 'https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.8/ElegantFinTV-0.1.8-jf12.2-catalog.zip'
+        sourceUrl = 'https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.9/ElegantFinTV-0.1.9-jf12.2-catalog.zip'
         checksum = (Get-FileHash -LiteralPath $outputPath -Algorithm MD5).Hash.ToLowerInvariant()
         timestamp = [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
     })

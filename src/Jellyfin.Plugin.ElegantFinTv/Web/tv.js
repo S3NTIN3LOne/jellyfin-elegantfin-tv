@@ -28,6 +28,14 @@
     var navigationHeader = null;
     var navigationDrawer = null;
     var headerSizeObserver = null;
+    var heroObserver = null;
+    var heroResizeObserver = null;
+    var heroFrame = 0;
+    var heroRows = null;
+    var heroStage = null;
+    var heroMargin = '';
+    var heroOriginalMargin = '';
+    var heroReturnFocus = null;
     var navigationSignature = '';
     var controls = '.play-button,.detail-button,.favorite-button,.pause-button,.volume-toggle,.left-arrow,.right-arrow,.dot';
     var labels = {
@@ -160,6 +168,7 @@
 
     function startMediaBar() {
         if (bodyObserver || !document.body) return;
+        document.addEventListener('keydown', onHomeBarKey, true);
         bindBar(document.getElementById('slides-container'));
         bodyObserver = new MutationObserver(function (records) {
             if (bar && bar.isConnected) return;
@@ -178,6 +187,131 @@
 
     function isTv() {
         return root.classList.contains('layout-tv') || /web0s|webos|netcast/i.test(navigator.userAgent);
+    }
+
+    function homeRows() {
+        return Array.from(document.querySelectorAll('.homeSectionsContainer')).find(visible);
+    }
+
+    function firstHomeItems(rows) {
+        if (!rows) return [];
+        var items = Array.from(rows.querySelectorAll('.card[tabindex],.card a[href],.homeLibraryButton')).filter(visible);
+        if (!items.length) return items;
+        var firstTop = Math.min.apply(null, items.map(function (item) { return item.getBoundingClientRect().top; }));
+        return items.filter(function (item) { return item.getBoundingClientRect().top < firstTop + 10; });
+    }
+
+    function onHomeBarKey(event) {
+        if (!isTv() || !bar || !visible(bar) || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        if (event.target.closest('dialog,[role="dialog"],input,textarea,select')) return;
+        var rows = homeRows();
+        var first = firstHomeItems(rows);
+        var target = null;
+        if (event.key === 'ArrowUp' && first.some(function (item) { return item === event.target || item.contains(event.target); })) {
+            target = Array.from(bar.querySelectorAll('.slide.active .play-button')).find(visible)
+                || Array.from(bar.querySelectorAll('[data-eftv-control]')).find(visible);
+            if (target) heroReturnFocus = event.target;
+        } else if (event.key === 'ArrowDown' && bar.contains(event.target) && event.target.closest('.button-container,.dots-container,.arrow')) {
+            target = heroReturnFocus && heroReturnFocus.isConnected && rows && rows.contains(heroReturnFocus) && visible(heroReturnFocus) ? heroReturnFocus : first[0];
+        }
+        if (!target) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        target.focus({ preventScroll: true });
+        // The bar lives outside Jellyfin's page focus scope and scroll frame.
+        if (bar.contains(target)) {
+            for (var parent = rows; parent && parent !== document.body; parent = parent.parentElement) {
+                if (parent.scrollTop) parent.scrollTop = 0;
+            }
+            window.scrollTo(0, 0);
+        } else target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+
+    function clearHeroMargin() {
+        if (heroRows && heroRows.style.getPropertyValue('--eftv-rows-margin') === heroMargin) {
+            if (heroOriginalMargin) heroRows.style.setProperty('--eftv-rows-margin', heroOriginalMargin);
+            else heroRows.style.removeProperty('--eftv-rows-margin');
+        }
+        heroRows = null;
+        heroStage = null;
+        heroMargin = '';
+        heroOriginalMargin = '';
+    }
+
+    function unscrolledTop(element) {
+        var top = element.getBoundingClientRect().top;
+        for (var parent = element.parentElement; parent && parent !== document.body && parent !== root; parent = parent.parentElement) top += parent.scrollTop;
+        return top;
+    }
+
+    function updateHeroLayout() {
+        heroFrame = 0;
+        var stage = document.getElementById('slides-container');
+        var rows = homeRows();
+        if (!stage || !rows) {
+            if (heroResizeObserver) heroResizeObserver.disconnect();
+            clearHeroMargin();
+            return;
+        }
+        if (heroRows !== rows || heroStage !== stage) {
+            clearHeroMargin();
+            heroRows = rows;
+            heroStage = stage;
+            heroOriginalMargin = rows.style.getPropertyValue('--eftv-rows-margin');
+            if (heroResizeObserver) {
+                heroResizeObserver.disconnect();
+                heroResizeObserver.observe(stage);
+                for (var parent = rows; parent && parent !== document.body; parent = parent.parentElement) heroResizeObserver.observe(parent);
+            }
+        }
+        if (!visible(stage)) {
+            rows.style.removeProperty('--eftv-rows-margin');
+            heroMargin = '';
+            return;
+        }
+        var title = Array.from(rows.querySelectorAll('.sectionTitle')).find(visible);
+        var first = title || Array.from(rows.children).find(visible) || rows;
+        var top = unscrolledTop(first) + (parseFloat(getComputedStyle(first).paddingTop) || 0);
+        var gap = parseFloat(getComputedStyle(root).fontSize) * .75;
+        var difference = unscrolledTop(stage) + stage.getBoundingClientRect().height + gap - top;
+        if (Math.abs(difference) < .5) return;
+        var margin = parseFloat(getComputedStyle(rows).marginTop) || 0;
+        heroMargin = (Math.round((margin + difference) * 100) / 100) + 'px';
+        rows.style.setProperty('--eftv-rows-margin', heroMargin);
+    }
+
+    function scheduleHeroLayout() {
+        if (!heroFrame) heroFrame = requestAnimationFrame(updateHeroLayout);
+    }
+
+    function startHeroLayout() {
+        if (heroObserver || !document.body) return;
+        if (window.ResizeObserver) heroResizeObserver = new ResizeObserver(scheduleHeroLayout);
+        heroObserver = new MutationObserver(function (records) {
+            if (records.some(function (record) {
+                if (heroRows && heroRows.contains(record.target)) return true;
+                return Array.from(record.addedNodes).concat(Array.from(record.removedNodes)).some(function (node) {
+                    return node.nodeType === 1 && (node.matches('#slides-container,.homeSectionsContainer') || node.querySelector('#slides-container,.homeSectionsContainer'));
+                });
+            })) scheduleHeroLayout();
+        });
+        heroObserver.observe(document.body, { childList: true, subtree: true });
+        window.addEventListener('resize', scheduleHeroLayout);
+        window.addEventListener('hashchange', scheduleHeroLayout);
+        document.addEventListener('viewshow', scheduleHeroLayout);
+        scheduleHeroLayout();
+    }
+
+    function stopHeroLayout() {
+        if (heroObserver) heroObserver.disconnect();
+        if (heroResizeObserver) heroResizeObserver.disconnect();
+        if (heroFrame) cancelAnimationFrame(heroFrame);
+        heroObserver = heroResizeObserver = null;
+        heroFrame = 0;
+        window.removeEventListener('resize', scheduleHeroLayout);
+        window.removeEventListener('hashchange', scheduleHeroLayout);
+        document.removeEventListener('viewshow', scheduleHeroLayout);
+        clearHeroMargin();
     }
 
     // Reuse the classic client's user-specific library links. No extra API
@@ -240,6 +374,7 @@
                 headerSizeObserver = new ResizeObserver(function () {
                     var height = Math.ceil(header.getBoundingClientRect().height);
                     if (height > 0) root.style.setProperty('--eftv-header-height', height + 'px');
+                    if (heroObserver) scheduleHeroLayout();
                 });
                 headerSizeObserver.observe(header);
             }
@@ -321,6 +456,8 @@
     }
 
     function stopMediaBar() {
+        document.removeEventListener('keydown', onHomeBarKey, true);
+        heroReturnFocus = null;
         if (bodyObserver) bodyObserver.disconnect();
         bodyObserver = null;
         unbindBar();
@@ -335,6 +472,7 @@
             root.removeAttribute('data-eftv-performance');
             stopMediaBar();
             stopNavigation();
+            stopHeroLayout();
             stopDiagnostics();
             if (link) link.disabled = true;
             return;
@@ -343,7 +481,7 @@
         if (parts.theme && !link) {
             link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = new URL((config.performance === 'full' ? 'tv-full.css' : 'tv.css') + '?v=' + encodeURIComponent(config.version || '0.1.8'), assetBase).href;
+            link.href = new URL((config.performance === 'full' ? 'tv-full.css' : 'tv.css') + '?v=' + encodeURIComponent(config.version || '0.1.9'), assetBase).href;
             link.onload = function () { loaded = true; reconcile(); };
             link.onerror = function () { console.warn('ElegantFin TV: stylesheet could not be loaded.'); };
             document.head.appendChild(link);
@@ -360,6 +498,7 @@
         }
         if (parts.adapter) startMediaBar(); else stopMediaBar();
         if (parts.theme && config.performance !== 'full' && isTv()) startNavigation(); else stopNavigation();
+        if (parts.theme && config.performance !== 'full' && isTv()) startHeroLayout(); else stopHeroLayout();
         if (config.showDiagnostics === true && isTv()) startDiagnostics();
         else stopDiagnostics();
     }
@@ -575,7 +714,7 @@
                 measurementRun++;
                 function number(value) { return value === null ? 'n/v' : value; }
                 var rows = [
-                    'ElegantFin TV ' + (config.version || '0.1.8') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
+                    'ElegantFin TV ' + (config.version || '0.1.9') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
                     'Theme: ' + result.components.theme + ' · Adapter: ' + result.components.adapter + ' · Profil: ' + (result.profile || 'Standard') + ' · Chrome ' + result.browserEngine,
                     result.viewport.width + '×' + result.viewport.height + ' · DPR ' + result.viewport.pixelRatio + ' · ' + result.startedAt,
                     'Frames/s: ' + number(result.frameSamplesPerSecond) + ' · längste Pause: ' + number(result.longestFrameMs) + ' ms',
@@ -600,7 +739,7 @@
     }
 
     window.ElegantFinTv = {
-        version: config.version || '0.1.8',
+        version: config.version || '0.1.9',
         diagnose: diagnose,
         status: function () { return { active: active, tv: isTv(), mediaBarFound: !!bar, profile: root.getAttribute('data-eftv-performance'), components: components() }; },
         dispose: function () {
