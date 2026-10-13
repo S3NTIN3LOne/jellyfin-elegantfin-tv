@@ -328,7 +328,7 @@
             removeNavigation();
             return;
         }
-        var items = [{ href: '#/home', label: 'Jellyfin', icon: 'home', brand: true },
+        var items = [{ href: '#/home', label: 'Startseite', icon: 'home' },
             { href: '#/home?tab=1', label: 'Favoriten', icon: 'favorite' }];
         var seen = new Set();
         sources.forEach(function (source) {
@@ -354,10 +354,18 @@
             navigation = document.createElement('nav');
             navigation.className = 'eftv-library-nav focuscontainer-x';
             navigation.setAttribute('aria-label', 'Bibliotheken');
+            var brand = document.createElement('span');
+            brand.className = 'eftv-brand';
+            var brandIcon = document.createElement('span');
+            brandIcon.className = 'eftv-brand-icon';
+            brandIcon.setAttribute('aria-hidden', 'true');
+            brand.appendChild(brandIcon);
+            brand.appendChild(document.createTextNode('Jellyfin'));
+            navigation.appendChild(brand);
             items.forEach(function (item) {
                 var a = document.createElement('a');
                 a.href = item.href;
-                a.className = 'emby-button' + (item.brand ? ' eftv-brand' : '');
+                a.className = 'emby-button';
                 var icon = document.createElement('span');
                 icon.className = 'material-icons';
                 icon.setAttribute('aria-hidden', 'true');
@@ -481,7 +489,7 @@
         if (parts.theme && !link) {
             link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = new URL((config.performance === 'full' ? 'tv-full.css' : 'tv.css') + '?v=' + encodeURIComponent(config.version || '0.1.9'), assetBase).href;
+            link.href = new URL((config.performance === 'full' ? 'tv-full.css' : 'tv.css') + '?v=' + encodeURIComponent(config.version || '0.1.10'), assetBase).href;
             link.onload = function () { loaded = true; reconcile(); };
             link.onerror = function () { console.warn('ElegantFin TV: stylesheet could not be loaded.'); };
             document.head.appendChild(link);
@@ -714,7 +722,7 @@
                 measurementRun++;
                 function number(value) { return value === null ? 'n/v' : value; }
                 var rows = [
-                    'ElegantFin TV ' + (config.version || '0.1.9') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
+                    'ElegantFin TV ' + (config.version || '0.1.10') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
                     'Theme: ' + result.components.theme + ' · Adapter: ' + result.components.adapter + ' · Profil: ' + (result.profile || 'Standard') + ' · Chrome ' + result.browserEngine,
                     result.viewport.width + '×' + result.viewport.height + ' · DPR ' + result.viewport.pixelRatio + ' · ' + result.startedAt,
                     'Frames/s: ' + number(result.frameSamplesPerSecond) + ' · längste Pause: ' + number(result.longestFrameMs) + ' ms',
@@ -739,7 +747,7 @@
     }
 
     window.ElegantFinTv = {
-        version: config.version || '0.1.9',
+        version: config.version || '0.1.10',
         diagnose: diagnose,
         status: function () { return { active: active, tv: isTv(), mediaBarFound: !!bar, profile: root.getAttribute('data-eftv-performance'), components: components() }; },
         dispose: function () {

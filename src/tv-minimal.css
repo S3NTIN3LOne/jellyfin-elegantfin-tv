@@ -13,7 +13,7 @@
     --eftv-focus-width: 2px;
     --eftv-page-gutter: 2.4vw;
     --eftv-hero-top: calc(var(--eftv-header-height, 4rem) + 1rem);
-    --eftv-hero-height: var(--slideshow-tv-height, 62vh);
+    --eftv-hero-height: var(--slideshow-tv-height, 50vh);
     --eftv-bar-control-size: 2.5rem;
     --eftv-bar-control-gap: .5rem;
     --eftv-bar-control-edge: 1rem;
@@ -127,9 +127,23 @@
 
 :root[data-eftv] .card:focus .cardScalable,
 :root[data-eftv] .card:focus-within .cardScalable {
-    outline: 3px solid var(--eftv-focus) !important;
-    outline-offset: -3px !important;
+    outline: none !important;
     box-shadow: none !important;
+}
+
+/* Paint above positioned poster/overlay children, inside the clipping edge. */
+:root[data-eftv] .cardScalable { position: relative; }
+:root[data-eftv] .card:focus .cardScalable::after,
+:root[data-eftv] .card:focus-within .cardScalable::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    border: 3px solid #fff;
+    box-shadow: inset 0 0 0 1px #111827;
+    border-radius: inherit;
+    box-sizing: border-box;
+    pointer-events: none;
 }
 
 :root[data-eftv] .card:has(.cardScalable):focus,
@@ -169,6 +183,21 @@
     animation: none !important;
 }
 
+:root[data-eftv] #slides-container .backdrop.animate:not(.with-video) {
+    animation: eftv-backdrop-zoom 12s linear forwards !important;
+    filter: none !important;
+}
+:root[data-eftv] #slides-container .slide.active .backdrop.animate:not(.with-video) {
+    will-change: transform;
+}
+@keyframes eftv-backdrop-zoom {
+    from { transform: scale3d(1, 1, 1); }
+    to { transform: scale3d(1.06, 1.06, 1); }
+}
+@media (prefers-reduced-motion: reduce) {
+    :root[data-eftv] #slides-container .backdrop.animate:not(.with-video) { animation: none !important; }
+}
+
 :root[data-eftv] #slides-container[data-eftv-adapted] .slide[inert] {
     pointer-events: none;
 }
@@ -204,19 +233,19 @@
 
 :root[data-eftv] #slides-container .slide-content {
     top: auto !important;
-    bottom: 3.5rem !important;
+    bottom: .8rem !important;
     left: var(--slideshow-gutter) !important;
     transform: none !important;
-    width: 40% !important;
-    max-height: calc(100% - 5rem) !important;
-    gap: .75rem;
+    width: 50% !important;
+    max-height: calc(100% - 3.5rem) !important;
+    gap: .35rem !important;
     overflow: visible !important;
     padding: .25rem;
     box-sizing: border-box;
 }
 
 :root[data-eftv] #slides-container .slide-content .logo-container {
-    height: 18vh;
+    height: 10vh;
     max-width: 100%;
     flex-shrink: 1;
     min-height: 0;
@@ -230,11 +259,20 @@
 }
 
 :root[data-eftv] #slides-container .plot {
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    -webkit-line-clamp: 3 !important;
+    line-clamp: 3 !important;
+    font-size: clamp(16px, 1.2vw, 24px) !important;
+    line-height: 1.4 !important;
+    max-height: 4.2em !important;
+    margin: 0 !important;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+:root[data-eftv] #slides-container :is(.info-container, .genre) {
+    font-size: clamp(16px, 1.1vw, 22px);
+    line-height: 1.3;
 }
 
 :root[data-eftv] #slides-container :is(.detail-button, .favorite-button) {
@@ -254,8 +292,8 @@
 }
 
 :root[data-eftv] #slides-container .dots-container {
-    top: auto !important;
-    bottom: 1.25rem !important;
+    top: 1rem !important;
+    bottom: auto !important;
     left: var(--slideshow-gutter) !important;
     right: auto !important;
     height: auto !important;
@@ -390,6 +428,8 @@
 :root[data-eftv] .homeLibraryButton:focus {
     outline-offset: -3px !important;
     transform: none !important;
+    box-shadow: inset 0 0 0 3px #fff !important;
+    background: #29364f !important;
 }
 
 :root[data-eftv] .eftv-library-nav a,
@@ -409,6 +449,11 @@
 }
 
 :root[data-eftv] .eftv-library-nav .eftv-brand {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: .5rem;
+    padding-inline: .4rem .8rem;
     background: transparent;
     color: #fff;
     font-weight: 600;
@@ -419,6 +464,10 @@
 /* Some Media Bar versions hide the description in their compact TV mode. */
 :root[data-eftv] #slides-container .slide-content .plot-container {
     display: block !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
 }
 
 :root[data-eftv] .MuiAppBar-root .MuiButton-text:has(.MuiButton-startIcon > img) {
@@ -454,3 +503,10 @@
     border-radius: inherit !important;
 }
 :root[data-eftv] .cardBox:not(.visualCardBox) .cardPadder { box-shadow: none !important; }
+
+:root[data-eftv] .eftv-brand-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: 0 0 auto;
+    background: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSAqKioqKiBCRUdJTiBMSUNFTlNFIEJMT0NLICoqKioqCiAgLSBQYXJ0IG9mIHRoZSBKZWxseWZpbiBwcm9qZWN0IChodHRwczovL2plbGx5ZmluLm1lZGlhKQogIC0gCiAgLSBBbGwgY29weXJpZ2h0IGJlbG9uZ3MgdG8gdGhlIEplbGx5ZmluIGNvbnRyaWJ1dG9yczsgYSBmdWxsIGxpc3QgY2FuCiAgLSBiZSBmb3VuZCBpbiB0aGUgZmlsZSBDT05UUklCVVRPUlMubWQKICAtIAogIC0gVGhpcyB3b3JrIGlzIGxpY2Vuc2VkIHVuZGVyIHRoZSBDcmVhdGl2ZSBDb21tb25zIEF0dHJpYnV0aW9uLVNoYXJlQWxpa2UgNC4wIEludGVybmF0aW9uYWwgTGljZW5zZS4KICAtIFRvIHZpZXcgYSBjb3B5IG9mIHRoaXMgbGljZW5zZSwgdmlzaXQgaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbGljZW5zZXMvYnktc2EvNC4wLy4KLSAqKioqKiBFTkQgTElDRU5TRSBCTE9DSyAqKioqKiAtLT4KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJpY29uLXRyYW5zcGFyZW50IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImxpbmVhci1ncmFkaWVudCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIHgxPSIxMTAuMjUiIHkxPSIyMTMuMyIgeDI9IjQ5Ni4xNCIgeTI9IjQzNi4wOSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3R5bGU9InN0b3AtY29sb3I6I0FBNUNDMyIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMEE0REMiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHRpdGxlPmljb24tdHJhbnNwYXJlbnQ8L3RpdGxlPgoJPGcgaWQ9Imljb24tdHJhbnNwYXJlbnQiPgoJCTxwYXRoIGlkPSJpbm5lci1zaGFwZSIgZD0iTTI1NiwyMDEuNmMtMjAuNCwwLTg2LjIsMTE5LjMtNzYuMiwxMzkuNHMxNDIuNSwxOS45LDE1Mi40LDBTMjc2LjUsMjAxLjYsMjU2LDIwMS42eiIgZmlsbD0idXJsKCNsaW5lYXItZ3JhZGllbnQpIi8+CgkJPHBhdGggaWQ9Im91dGVyLXNoYXBlIiBkPSJNMjU2LDIzLjNjLTYxLjYsMC0yNTkuOCwzNTkuNC0yMjkuNiw0MjAuMXM0MjkuMyw2MCw0NTkuMiwwUzMxNy42LDIzLjMsMjU2LDIzLjN6CgkJTTQwNi41LDM5MC44Yy0xOS42LDM5LjMtMjgxLjEsMzkuOC0zMDAuOSwwczExMC4xLTI3NS4zLDE1MC40LTI3NS4zUzQyNi4xLDM1MS40LDQwNi41LDM5MC44eiIgZmlsbD0idXJsKCNsaW5lYXItZ3JhZGllbnQpIi8+Cgk8L2c+Cjwvc3ZnPgo=") center / contain no-repeat;
+}

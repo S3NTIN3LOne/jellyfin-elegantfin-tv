@@ -1,0 +1,3 @@
+Jellyfin contributors, jellyfin-ux
+https://github.com/jellyfin/jellyfin-ux/blob/69a2b7b1237732a134dd501ff55b9404cf2d1601/branding/SVG/icon-transparent.svg
+CC BY-SA 4.0. Icon unchanged; embedded as a CSS data URL.

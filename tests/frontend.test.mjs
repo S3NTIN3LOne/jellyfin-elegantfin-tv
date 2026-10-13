@@ -241,13 +241,22 @@ test('poster cards have one outline; standalone buttons keep a visible focus ind
         document.body.appendChild(card);
     });
     await page.locator('#poster-test').focus();
+    await page.addStyleTag({content:'#poster-test .cardImageContainer{position:absolute;inset:0;z-index:4;background:#888}'});
     assert.equal(await page.locator('#poster-test').evaluate(el => getComputedStyle(el).outlineStyle), 'none');
-    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
-    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineWidth), '3px');
-    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineColor), 'rgb(255, 255, 255)');
+    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el, '::after').borderTopStyle), 'solid');
+    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el, '::after').borderTopWidth), '3px');
+    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el, '::after').borderTopColor), 'rgb(255, 255, 255)');
+    const pixels = await page.locator('#poster-test .cardScalable').screenshot();
+    const edges = await page.evaluate(async png => {
+        const img = new Image(); img.src='data:image/png;base64,'+png; await img.decode();
+        const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;
+        const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);
+        return [1,3].map(x=>Array.from(ctx.getImageData(x,100,1,1).data).slice(0,3));
+    },pixels.toString('base64'));
+    assert.deepEqual(edges, [[255,255,255],[17,24,39]], 'white ring and dark contrast edge are painted above the image');
     await page.locator('#poster-test a').focus();
     assert.equal(await page.locator('#poster-test a').evaluate(el => getComputedStyle(el).outlineStyle), 'none');
-    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
+    assert.equal(await page.locator('#poster-test .cardScalable').evaluate(el => getComputedStyle(el, '::after').borderTopStyle), 'solid');
     await page.locator('#outside').focus();
     assert.equal(await page.locator('#outside').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
     await context.close();
@@ -313,7 +322,7 @@ test('minimal theme preserves native card dimensions, focus zoom, transitions an
     assert.equal(native.duration, '0.2s');
     assert.equal(native.shadow, 'none');
     assert.equal(await page.locator('#motion-card').evaluate(el => getComputedStyle(el).width), '150px');
-    assert.equal(await page.locator('#motion-card .cardScalable').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
+    assert.equal(await page.locator('#motion-card .cardScalable').evaluate(el => getComputedStyle(el, '::after').borderTopStyle), 'solid');
     await page.locator('#motion-card button').focus();
     assert.equal(await page.evaluate(() => document.activeElement.textContent), 'Play');
     await page.evaluate(() => window.ElegantFinTv.dispose());
@@ -468,6 +477,9 @@ test('classic TV navigation uses user library routes and handles late rendering,
     });
     await page.waitForSelector('.eftv-library-nav');
     assert.equal(await page.locator('.eftv-library-nav a').count(), 4);
+    assert.equal(await page.locator('.eftv-brand').evaluate(el => el.tagName), 'SPAN');
+    assert.equal(await page.locator('.eftv-brand').evaluate(el => el.tabIndex), -1);
+    assert.equal(await page.locator('.eftv-library-nav a[href="#/home"]').textContent(), 'homeStartseite');
     const movieLink = page.locator('.eftv-library-nav a[href="#/movies?topParentId=movie-id"]');
     await movieLink.focus();
     await page.keyboard.press('Enter');
@@ -561,7 +573,7 @@ test('Media Bar height setting keeps the following rows at a constant gap', asyn
             });
             const bar = await page.locator('#slides-container').boundingBox();
             const rows = await page.locator('.homeSectionsContainer').boundingBox();
-            assert.ok(Math.abs(bar.height - viewport.height * (height || 62) / 100) < 1);
+            assert.ok(Math.abs(bar.height - viewport.height * (height || 50) / 100) < 1);
             assert.ok(Math.abs(rows.y - bar.y - bar.height - 12) < 1, 'gap must not grow when bar height decreases');
         }
         await context.close();
@@ -622,7 +634,7 @@ test('native non-animated TV card borders and grey image corners are removed', a
         await page.locator('#native-card').focus();
         const border = await page.locator(visual ? '#native-card .cardBox' : '#native-card .cardScalable').evaluate(el => getComputedStyle(el).borderTopWidth);
         assert.equal(border, '0px');
-        assert.equal(await page.locator('#native-card .cardScalable').evaluate(el => getComputedStyle(el).outlineWidth), '3px');
+        assert.equal(await page.locator('#native-card .cardScalable').evaluate(el => getComputedStyle(el, '::after').borderTopWidth), '3px');
         const radius = await page.locator('#native-card .cardScalable').evaluate(el => getComputedStyle(el).borderTopLeftRadius);
         for (const selector of ['.cardPadder','.cardImageContainer','.blurhash-canvas']) {
             assert.equal(await page.locator('#native-card '+selector).evaluate(el => getComputedStyle(el).borderTopLeftRadius), radius);
@@ -737,6 +749,55 @@ test('native header paint containment and TV focus zoom cannot clip the revised 
         assert.equal(await page.locator(name).evaluate(el => getComputedStyle(el).outlineOffset), '-3px');
     }
     await page.locator('.clip-row .card').focus();
-    assert.equal(await page.locator('.clip-row .cardScalable').evaluate(el => getComputedStyle(el).outlineOffset), '-3px');
+    assert.equal(await page.locator('.clip-row .cardScalable').evaluate(el => getComputedStyle(el, '::after').left), '0px');
+    await context.close();
+});
+
+test('50vh TV hero keeps three plot lines and bottom actions within every layout', async () => {
+    for (const [width,height,fontSize] of [[1920,1080,32],[1280,720,24]]) {
+        const {page, context} = await open({viewport:{width,height}});
+        await page.evaluate(fontSize => {
+            document.querySelector('head style').remove();
+            document.documentElement.style.fontSize=fontSize+'px';
+            document.documentElement.style.setProperty('--slideshow-tv-height','50vh');
+            document.querySelector('#two').remove();
+            document.querySelector('#one').innerHTML='<div class="slide-content"><div class="logo-container"><img class="logo" alt="Title"></div><div class="info-container">2026 · 2h 10min</div><div class="genre">Drama · Adventure</div><div class="plot-container"><div class="plot">'+('A long film summary with enough words to fill more than three lines. ').repeat(20)+'</div></div><div class="button-container"><button class="play-button">Play</button><button class="detail-button">Info</button><button class="favorite-button">Favorite</button></div></div>';
+            document.querySelector('.logo').src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="100"><rect width="400" height="100" fill="white"/></svg>');
+            document.querySelector('#slides-container').insertAdjacentHTML('beforeend','<div class="dots-container">● ● ●</div>');
+        },fontSize);
+        await page.addStyleTag({content:`body{margin:0}#slides-container{position:absolute}.slide{position:absolute;inset:0}
+            .slide-content{position:absolute;display:flex;flex-direction:column;align-items:flex-start}
+            .logo-container{display:flex;flex:0 1 auto;width:100%;min-height:0}.logo{height:100%;max-width:100%}
+            .info-container,.genre,.button-container{flex:0 0 auto}.button-container{display:flex}
+            #slides-container.layout-marquee .plot-container{flex:0 1 auto;overflow:hidden}
+            #slides-container.layout-marquee .plot{-webkit-line-clamp:2}
+            .dots-container{position:absolute}
+        `});
+        for (const layout of ['','layout-plate','layout-marquee']) {
+            await page.locator('#slides-container').evaluate((el,layout)=>el.className=layout,layout);
+            const stage = await page.locator('#slides-container').boundingBox();
+            const plot = await page.locator('.plot').boundingBox();
+            const lineHeight = await page.locator('.plot').evaluate(el=>parseFloat(getComputedStyle(el).lineHeight));
+            assert.ok(Math.abs(plot.height - lineHeight*3) < 1, 'three full lines');
+            const buttons = await page.locator('.button-container').boundingBox();
+            const dots = await page.locator('.dots-container').boundingBox();
+            assert.ok(plot.y>=stage.y && plot.y+plot.height<=buttons.y);
+            assert.ok(buttons.y+buttons.height<=stage.y+stage.height);
+            assert.ok(dots.y+dots.height<plot.y);
+        }
+        await context.close();
+    }
+});
+
+test('TV zoom uses only transform and honours reduced motion', async () => {
+    const {page,context}=await open();
+    await page.addStyleTag({content:'.backdrop.animate{animation:frostedGlass 1.2s,kenBurnsZoomIn 12s;filter:blur(8px)}'});
+    await page.locator('#one').evaluate(el=>el.insertAdjacentHTML('afterbegin','<div class="backdrop animate"></div>'));
+    const backdrop=page.locator('#one .backdrop');
+    assert.equal(await backdrop.evaluate(el=>getComputedStyle(el).animationName),'eftv-backdrop-zoom');
+    assert.equal(await backdrop.evaluate(el=>getComputedStyle(el).animationTimingFunction),'linear');
+    assert.equal(await backdrop.evaluate(el=>getComputedStyle(el).filter),'none');
+    await page.emulateMedia({reducedMotion:'reduce'});
+    assert.equal(await backdrop.evaluate(el=>getComputedStyle(el).animationName),'none');
     await context.close();
 });

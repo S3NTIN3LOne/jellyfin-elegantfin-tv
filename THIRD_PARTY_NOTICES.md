@@ -13,3 +13,6 @@ Downloadquellen und SHA256-Prüfsummen aller gebündelten Fontdateien stehen in 
 Neue Plugin-/Frontend-/Builddateien und abgeleitete Theme-Anpassungen dieses Projekts stehen unter GPL-2.0; vollständiger Text in `LICENSE`. Fontdateien behalten ihre eigenen Lizenzen. NPM-/NuGet-Entwicklungsabhängigkeiten behalten ihre jeweiligen Lizenzen und werden nicht als Bibliotheken im Pluginpaket ausgeliefert.
 
 Das Projekt enthält keinen kopierten Media-Bar-JavaScriptcode und keine Kopie des File-Transformation-Plugins. Beide bleiben separat installierte Komponenten. Die Integration orientiert sich an der dokumentierten File-Transformation-Schnittstelle und den Selektoren der vom Nutzer gelieferten CSS-Datei.
+# Jellyfin branding
+
+The unchanged Jellyfin icon embedded in the minimal theme is by the Jellyfin contributors, from [jellyfin/jellyfin-ux](https://github.com/jellyfin/jellyfin-ux). It is licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The original SVG, full license and pinned source URL are included in `vendor/jellyfin` in the source archive. Encoding the SVG as a CSS data URL does not change its artwork.

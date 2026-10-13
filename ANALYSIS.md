@@ -1,5 +1,13 @@
 # Analyse und Grenzen
 
+## Korrekturen 0.1.10.0
+
+Der zuvor negative Outline-Offset war keine zuverlässige Lösung für positionierte Bild-/Overlayebenen. Der Rahmen wird nun als absolute, nicht interaktive Pseudoebene über diesen Kindern gezeichnet, weiterhin innerhalb der Kartenbegrenzung. Der Regressionstest rendert ein Bild mit eigenem z-index und prüft die tatsächlichen Screenshot-Pixel der weißen Linie und der dunklen Kontrastkante.
+
+Media Bar kombiniert `frostedGlass` (animierter Filter) mit `kenBurnsZoomIn`. Das schlanke TV-Theme ersetzt diese Kombination durch eine reine Transform-Animation mit linearer Zeitfunktion. Dies reduziert die zu animierenden Eigenschaften; eine Verbesserung der tatsächlichen TV-Frametimes wurde hier nicht gemessen.
+
+Die verschiedenen Bar-Layouts bringen eigene Plot-Clamps und schrumpfende Plotcontainer mit. Das Theme vereinheitlicht drei Zeilen, nicht schrumpfenden Textcontainer, kompakte Metadaten und unten sitzende Aktionen. Die Vorschaupunkte wechseln nach oben links. Server-, Client- und CSS-Standardhöhe von Media Bar werden in 3.0.0.4 auf 50 Prozent angehoben, ohne bestehende gespeicherte Einstellungen zu überschreiben. Das Branding verwendet das unveränderte offizielle Jellyfin-SVG aus `vendor/jellyfin` als eingebettete CSS-Grafik; der Startseitenlink bleibt ein separater Fokuspunkt.
+
 ## Korrekturen 0.1.9.0
 
 Die vorherigen Tests hatten native Clipping- und Seitencontainer nicht ausreichend abgebildet. Jellyfin-Web (Referenzcommit `fb9fff44b0c1280d44c8364577383d47e40c7bc2`, `src/styles/librarybrowser.scss`) setzt auf `.skinHeader` tatsächlich `contain: layout style paint`. `overflow: visible` allein hebt dieses Clipping nicht auf. Die korrigierte Ebene bleibt innerhalb der Headerhöhe und blendet nach unten aus; Paint-Containment entfällt. Die nativen 1,3-fachen Fokusvergrößerungen von Iconbuttons und Tabs werden nur im Header durch innenliegende Ringe ersetzt. Karten behalten ihren nativen Zoom, der Ring liegt jetzt innen.
