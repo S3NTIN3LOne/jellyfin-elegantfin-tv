@@ -801,3 +801,38 @@ test('TV zoom uses only transform and honours reduced motion', async () => {
     assert.equal(await backdrop.evaluate(el=>getComputedStyle(el).animationName),'none');
     await context.close();
 });
+
+test('library links remain on one line with native right actions and redundant home/back controls', async () => {
+    const {page,context}=await open({viewport:{width:1920,height:1080}});
+    await page.addStyleTag({content:`html{font-size:32px}.headerTop{padding:.8em;display:flex}
+        .headerLeft,.headerRight{display:flex}.headerButton{flex-shrink:0}
+        .paper-icon-button-light{padding:.556em;margin:0 .29em;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
+        .paper-icon-button-light>.material-icons{font-size:1.669em}.paper-icon-button-light>div{transform:scale(1.8)}
+        .emby-button{margin:.3em}.hide{display:none!important}
+        .material-icons{display:inline-block;width:1em;overflow:hidden;font-size:1.36em;white-space:nowrap}
+    `});
+    await page.evaluate(()=>{
+        location.hash='#/home';
+        document.body.insertAdjacentHTML('afterbegin','<header class="skinHeader"><div class="headerTop"><div class="headerLeft"><button class="headerButton paper-icon-button-light headerBackButton hide">Back</button><button class="headerButton paper-icon-button-light headerHomeButton hide">Home</button></div><div class="headerRight">'+['Sync','Audio','Cast','Search','User'].map(name=>'<button class="headerButton paper-icon-button-light header'+name+'Button"><span class="material-icons">●</span></button>').join('')+'</div></div></header><div class="mainDrawer" hidden><div class="libraryMenuOptions">'+['Anime','Filme','Live TV','Sammlungen','Serien'].map((name,i)=>'<a class="navMenuOption" href="#/library?id='+i+'"><span class="navMenuOptionText">'+name+'</span></a>').join('')+'</div></div>');
+    });
+    await page.waitForSelector('.eftv-library-nav');
+    for (const hash of ['#/home','#/movies']) {
+        await page.evaluate(hash=>{
+            location.hash=hash;
+            document.querySelectorAll('.headerHomeButton,.headerBackButton').forEach(el=>el.classList.toggle('hide',hash==='#/home'));
+        },hash);
+        const links=await page.locator('.eftv-library-nav a').all();
+        const first=await links[0].boundingBox();
+        for (const link of links) assert.ok(Math.abs((await link.boundingBox()).y-first.y)<1,'all library links on first line');
+        assert.equal(await page.locator('.headerHomeButton').isVisible(),false);
+        assert.equal(await page.locator('.headerBackButton').isVisible(),false);
+        assert.equal(await page.locator('.headerSearchButton').isVisible(),true);
+        assert.equal(await page.locator('.headerUserButton').isVisible(),true);
+    }
+    await page.locator('.headerUserButton').evaluate(el=>el.innerHTML='<div class="headerUserButtonRound paper-icon-button-light"></div>');
+    assert.equal(await page.locator('.headerUserButtonRound').evaluate(el=>getComputedStyle(el).transform),'none');
+    await page.evaluate(()=>window.ElegantFinTv.dispose());
+    assert.equal(await page.locator('.headerHomeButton').isVisible(),true);
+    assert.equal(await page.locator('.headerBackButton').isVisible(),true);
+    await context.close();
+});

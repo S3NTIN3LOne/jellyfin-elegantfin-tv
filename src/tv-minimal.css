@@ -373,7 +373,7 @@
 :root[data-eftv] .eftv-library-nav {
     display: flex;
     align-items: center;
-    gap: .5rem;
+    gap: .35rem;
     flex-wrap: wrap;
     flex: 1 1 auto;
     min-width: 0;
@@ -385,7 +385,30 @@
 :root[data-eftv] .eftv-library-nav::-webkit-scrollbar { display: none; }
 :root[data-eftv] .skinHeader[data-eftv-navigation] .headerLeft { flex: 0 0 auto; }
 :root[data-eftv] .skinHeader[data-eftv-navigation] .headerRight { flex: 0 0 auto; }
-:root[data-eftv] .skinHeader[data-eftv-navigation] .headerTop { gap: .75rem; }
+:root[data-eftv] .skinHeader[data-eftv-navigation] .headerTop { gap: .4rem; }
+:root[data-eftv] .skinHeader[data-eftv-navigation] .headerLeft :is(.headerHomeButton, .headerBackButton) {
+    display: none !important;
+}
+:root[data-eftv] .skinHeader[data-eftv-navigation] .headerRight { gap: .1rem; }
+:root[data-eftv] .skinHeader[data-eftv-navigation] .headerRight > .headerButton {
+    width: 1.8rem;
+    height: 1.8rem;
+    min-width: 0;
+    min-height: 0;
+    padding: .25rem;
+    margin: 0;
+}
+:root[data-eftv] .skinHeader[data-eftv-navigation] .headerRight > .headerButton > .material-icons {
+    font-size: 1.2rem;
+}
+:root[data-eftv] .skinHeader[data-eftv-navigation] .headerRight .headerUserButton > .headerUserButtonRound {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    transform: none;
+    background-size: cover;
+}
 :root[data-eftv] .skinHeader[data-eftv-navigation] .headerTop {
     display: flex;
     width: 100%;
@@ -446,6 +469,13 @@
     white-space: nowrap;
     font: inherit;
     font-size: .8rem;
+}
+
+:root[data-eftv] .eftv-library-nav a {
+    margin: 0;
+    padding: .35rem .4rem;
+    gap: .35rem;
+    font-size: .75rem;
 }
 
 :root[data-eftv] .eftv-library-nav .eftv-brand {
