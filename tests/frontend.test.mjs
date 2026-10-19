@@ -836,3 +836,98 @@ test('library links remain on one line with native right actions and redundant h
     assert.equal(await page.locator('.headerBackButton').isVisible(),true);
     await context.close();
 });
+
+test('personal theme preference persists per account and remains reachable while disabled', async () => {
+    const context = await browser.newContext();
+    await context.addInitScript(() => {
+        window.testUser = 'one';
+        window.ApiClient = {
+            getCurrentUserId: () => window.testUser,
+            serverAddress: () => 'https://example.test',
+            getDisplayPreferences: async (id,user,client) => {
+                if (client !== 'ElegantFinTv') throw Error('Wrong namespace');
+                return JSON.parse(localStorage.getItem('test-prefs-'+user) || '{"CustomPrefs":{"unrelated":"keep"}}');
+            },
+            updateDisplayPreferences: async (id,data,user) => {
+                if (window.failSave) throw Error('Network unavailable');
+                localStorage.setItem('test-prefs-'+user, JSON.stringify(data));
+            }
+        };
+    });
+    const page=await context.newPage();
+    const showSettings=async () => {
+        await page.evaluate(() => document.body.insertAdjacentHTML('beforeend','<form><div class="selectContainer"><select id="selectTheme"><option>Dark</option></select></div></form>'));
+        await page.waitForFunction(()=>document.querySelector('#eftv-personal-enabled')?.disabled === false);
+    };
+    await page.goto(base+'/web/index.html');
+    await showSettings();
+    await page.locator('#eftv-personal-enabled').uncheck();
+    await page.waitForFunction(()=>!window.ElegantFinTv.status().active);
+    assert.equal(await page.locator('[data-eftv]').count(),0);
+    assert.equal(await page.locator('[data-eftv-adapted]').count(),0);
+    assert.equal(await page.locator('#eftv-personal-enabled').isEnabled(),true);
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('test-prefs-one')).CustomPrefs.unrelated),'keep');
+    await page.reload();
+    await showSettings();
+    assert.equal(await page.locator('#eftv-personal-enabled').isChecked(),false);
+    assert.equal(await page.evaluate(()=>window.ElegantFinTv.status().active),false);
+    await page.evaluate(()=>{window.testUser='two';window.dispatchEvent(new Event('hashchange'));});
+    await page.waitForFunction(()=>window.ElegantFinTv.status().active && !document.querySelector('#eftv-personal-enabled').disabled);
+    assert.equal(await page.locator('#eftv-personal-enabled').isChecked(),true);
+    await page.evaluate(()=>window.failSave=true);
+    await page.locator('#eftv-personal-enabled').click();
+    await page.waitForFunction(()=>document.querySelector('#eftv-personal-setting [role=status]').textContent.includes('fehlgeschlagen'));
+    assert.equal(await page.locator('#eftv-personal-enabled').isChecked(),true);
+    assert.equal(await page.evaluate(()=>window.ElegantFinTv.status().active),true);
+    await page.evaluate(()=>{window.failSave=false;window.testUser='one';window.dispatchEvent(new Event('hashchange'));});
+    await page.waitForFunction(()=>!window.ElegantFinTv.status().active && !document.querySelector('#eftv-personal-enabled').disabled);
+    await page.locator('#eftv-personal-enabled').check();
+    await page.waitForFunction(()=>window.ElegantFinTv.status().active);
+    assert.equal(await page.locator('#eftv-personal-setting').count(),1);
+    await page.evaluate(()=>window.ElegantFinTv.dispose());
+    assert.equal(await page.locator('#eftv-personal-setting').count(),0);
+    await context.close();
+});
+
+test('administrator settings expose the theme switch without retired debug options', async () => {
+    const settings=await readFile(new URL('src/Jellyfin.Plugin.ElegantFinTv/Web/settings.html',root),'utf8');
+    const page=await browser.newPage();
+    await page.addInitScript(()=>window.ApiClient={
+        getPluginConfiguration:async()=>({Enabled:true,MediaBar:true,ApplyToAllClients:false}),
+        updatePluginConfiguration:async(id,config)=>window.savedConfig=config
+    });
+    await page.route('**/settings-test',route=>route.fulfill({contentType:'text/html',body:settings}));
+    await page.goto(base+'/settings-test');
+    await page.locator('#ElegantFinTvSettingsPage').evaluate(el=>el.dispatchEvent(new Event('viewshow')));
+    await page.waitForFunction(()=>document.getElementById('eftvEnabled').checked);
+    assert.equal(await page.locator('select,#eftvDiagnostics').count(),0);
+    await page.locator('#eftvEnabled').uncheck();
+    await page.locator('button[type=submit]').click();
+    await page.waitForFunction(()=>window.savedConfig?.Enabled===false);
+    assert.equal(await page.evaluate(()=>window.savedConfig.MediaBar),true);
+    await page.close();
+});
+
+test('late preference responses cannot change another account and read errors cannot be saved', async () => {
+    const {page,context}=await open();
+    await page.evaluate(()=>{
+        window.testUser='one';
+        window.ApiClient={
+            getCurrentUserId:()=>window.testUser,
+            serverAddress:()=>'/server',
+            getDisplayPreferences:(id,user)=>user==='one' ? new Promise(resolve=>window.finishOldRead=resolve) : user==='two' ? Promise.resolve({CustomPrefs:{Enabled:'true'}}) : Promise.reject(Error('offline')),
+            updateDisplayPreferences:()=>{throw Error('must not write after read failure');}
+        };
+        document.body.insertAdjacentHTML('beforeend','<form><div class="selectContainer"><select id="selectTheme"></select></div></form>');
+    });
+    await page.waitForFunction(()=>window.finishOldRead);
+    await page.evaluate(()=>{window.testUser='two';window.dispatchEvent(new Event('hashchange'));});
+    await page.waitForFunction(()=>document.querySelector('#eftv-personal-enabled')?.disabled===false);
+    await page.evaluate(()=>window.finishOldRead({CustomPrefs:{Enabled:'false'}}));
+    assert.equal(await page.locator('#eftv-personal-enabled').isChecked(),true);
+    assert.equal(await page.evaluate(()=>window.ElegantFinTv.status().active),true);
+    await page.evaluate(()=>{window.testUser='three';window.dispatchEvent(new Event('hashchange'));});
+    await page.waitForFunction(()=>document.querySelector('#eftv-personal-setting [role=status]').textContent.includes('nicht geladen'));
+    assert.equal(await page.locator('#eftv-personal-enabled').isDisabled(),true);
+    await context.close();
+});

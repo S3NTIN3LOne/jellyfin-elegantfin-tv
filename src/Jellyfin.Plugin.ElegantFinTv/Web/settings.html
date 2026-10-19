@@ -7,15 +7,9 @@
         <form id="ElegantFinTvSettingsForm">
             <h2>ElegantFin TV</h2>
             <p>Die Einstellungen werden beim nächsten vollständigen Laden der App wirksam.</p>
+            <p>Nutzer können ElegantFin TV in ihren persönlichen Anzeigeeinstellungen selbst ein- oder ausschalten. Der folgende Schalter aktiviert das Theme zentral.</p>
             <div class="checkboxContainer checkboxContainer-withDescription">
-                <label><input is="emby-checkbox" type="checkbox" id="eftvEnabled"><span>Plugin aktivieren (auch für Vergleichsmessungen erforderlich)</span></label>
-            </div>
-            <div class="selectContainer">
-                <label class="selectLabel" for="eftvPerformance">Darstellung</label>
-                <select is="emby-select" id="eftvPerformance">
-                    <option value="balanced">TV: schlankes Design mit Jellyfin-Animationen</option>
-                    <option value="full">Bisheriges vollst?ndiges Theme zum Vergleich</option>
-                </select>
+                <label><input is="emby-checkbox" type="checkbox" id="eftvEnabled"><span>TV-Theme aktivieren</span></label>
             </div>
             <div class="checkboxContainer checkboxContainer-withDescription">
                 <label><input is="emby-checkbox" type="checkbox" id="eftvMediaBar"><span>Media-Bar-Fokusbedienung ergänzen</span></label>
@@ -24,21 +18,6 @@
             <div class="checkboxContainer checkboxContainer-withDescription">
                 <label><input is="emby-checkbox" type="checkbox" id="eftvAll"><span>Auch auf Desktop und Mobilgeräten aktivieren</span></label>
                 <div class="fieldDescription">Standardmäßig nur webOS und TV-Layout. Bei Aktivierung bestehende ElegantFin-CSS-Einbindungen entfernen, um doppelte Themes zu vermeiden.</div>
-            </div>
-            <div class="checkboxContainer checkboxContainer-withDescription">
-                <label><input is="emby-checkbox" type="checkbox" id="eftvDiagnostics"><span>Diagnose auf dem Fernseher anzeigen</span></label>
-                <div class="fieldDescription">Erst die Bibliothek öffnen. Dann „Messung starten“ wählen oder die rote Farbtaste drücken: 3 Sekunden Vorlauf, 15 Sekunden Messung ohne Anzeige. Ergebnis fotografieren; erneute Messung für bereits geladene Poster möglich. Keine Übertragung von Messdaten.</div>
-            </div>
-            <div class="selectContainer">
-                <label class="selectLabel" for="eftvComparison">Vergleichsmodus (nur TV/webOS)</label>
-                <select is="emby-select" id="eftvComparison">
-                    <option value="normal">Normalbetrieb: vorhandene Einstellungen verwenden</option>
-                    <option value="reference">Referenz: ohne TV-Theme und ohne Fokusadapter</option>
-                    <option value="theme">Nur Theme: TV-CSS ohne Fokusadapter</option>
-                    <option value="adapter">Nur Adapter: Fokusadapter ohne TV-CSS</option>
-                    <option value="complete">Komplett: TV-CSS und Fokusadapter</option>
-                </select>
-                <div class="fieldDescription">Die eigentliche Media Bar bleibt unverändert. Vergleichsmodi übersteuern die Fokusadapter-Option auf dem TV und gelten auch bei ausgeschalteter Diagnose. Für den Vergleich ohne Messung nur die Diagnose ausschalten. Nach den Tests Normalbetrieb auswählen. App nach Änderungen vollständig neu starten.</div>
             </div>
             <p id="eftvSettingsStatus" role="status"></p>
             <button is="emby-button" type="submit" class="raised button-submit block"><span>Speichern</span></button>
@@ -55,9 +34,6 @@
                 field('eftvEnabled').checked = config.Enabled;
                 field('eftvMediaBar').checked = config.MediaBar;
                 field('eftvAll').checked = config.ApplyToAllClients;
-                field('eftvDiagnostics').checked = config.ShowDiagnostics === true;
-                field('eftvComparison').value = ['reference', 'theme', 'adapter', 'complete'].includes(config.ComparisonMode) ? config.ComparisonMode : 'normal';
-                field('eftvPerformance').value = config.Performance === 'full' ? 'full' : 'balanced';
             }).catch(error);
         });
         page.querySelector('form').addEventListener('submit', function (event) {
@@ -66,9 +42,6 @@
                 config.Enabled = field('eftvEnabled').checked;
                 config.MediaBar = field('eftvMediaBar').checked;
                 config.ApplyToAllClients = field('eftvAll').checked;
-                config.ShowDiagnostics = field('eftvDiagnostics').checked;
-                config.ComparisonMode = field('eftvComparison').value;
-                config.Performance = field('eftvPerformance').value;
                 return ApiClient.updatePluginConfiguration(id, config);
             }).then(function () {
                 field('eftvSettingsStatus').textContent = 'Gespeichert. Jellyfin-App vollständig neu laden.';

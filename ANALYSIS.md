@@ -1,5 +1,13 @@
 # Analyse und Grenzen
 
+## Einstellungen 0.1.12.0
+
+Der persönliche Schalter wird neben Jellyfins Theme-Auswahl in das Anzeigeformular eingefügt. Er verwendet eine eigene DisplayPreferences-ID und den Client-Namensraum `ElegantFinTv`, ohne andere Anzeigeeinstellungen zu überschreiben. Lesen und Schreiben laufen über den angemeldeten ApiClient; es werden keine Tokens oder globalen Plugin-Konfigurationen im Browser gespeichert. Antworten werden mit einer Generationsnummer dem jeweiligen Konto zugeordnet, damit verspätete Antworten nach einem Benutzerwechsel keinen fremden Zustand anwenden.
+
+Die Einstellungen werden unabhängig von der aktiven Theme-Laufzeit beobachtet, damit ein deaktiviertes Theme wieder aktiviert werden kann. Fehlgeschlagene Schreibvorgänge lassen den zuletzt gespeicherten Zustand unverändert. Bei Lesefehlern ist der Schalter gesperrt und zeigt einen Fehler. Die bestehenden Dispose-Pfade entfernen Theme, Navigation, Layoutkorrektur und Fokusadapter; die separate Media Bar bleibt bestehen.
+
+Die drei Debug-Properties sind aus Serverkonfiguration und Bootstrap-Daten entfernt. Alte XML-Felder werden beim Deserialisieren ignoriert. Interne Diagnose-/Vergleichsroutinen bleiben für bestehende Entwicklungstests im Quellcode, werden aber nicht mehr über Plugin-Einstellungen aktiviert. Tests prüfen sowohl die Migration als auch die neue Benutzeroberfläche.
+
 ## Korrekturen 0.1.10.0
 
 Der zuvor negative Outline-Offset war keine zuverlässige Lösung für positionierte Bild-/Overlayebenen. Der Rahmen wird nun als absolute, nicht interaktive Pseudoebene über diesen Kindern gezeichnet, weiterhin innerhalb der Kartenbegrenzung. Der Regressionstest rendert ein Bild mit eigenem z-index und prüft die tatsächlichen Screenshot-Pixel der weißen Linie und der dunklen Kontrastkante.

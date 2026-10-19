@@ -66,7 +66,7 @@ public sealed class RegisterTransformationTask(ILogger<RegisterTransformationTas
             ["callbackMethod"] = nameof(Transformation.IndexHtml)
         };
         method.Invoke(null, [payload]);
-        logger.LogInformation("ElegantFin TV frontend registered. Profile: {Profile}", Plugin.Instance?.Configuration.Performance);
+        logger.LogInformation("ElegantFin TV frontend registered.");
         progress.Report(100);
         return Task.CompletedTask;
     }

@@ -2,7 +2,17 @@
 
 Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Übernimmt die Gestaltung aus den drei bereitgestellten CSS-Dateien, aktiviert sie auf TVs und ergänzt Fokusbedienung für eine vorhandene Media Bar.
 
-**Status: Version 0.1.11.0 schafft mehr Platz für die Bibliotheksnavigation.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.11). Media Bar bleibt auf **3.0.0.4**.
+**Status: Version 0.1.12.0 ergänzt einen persönlichen Theme-Schalter und entfernt die Debug-Einstellungen.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.12). Media Bar bleibt auf **3.0.0.4**.
+
+## Update 0.1.12.0: Persönlicher Theme-Schalter
+
+Unter **Benutzereinstellungen → Anzeige → ElegantFin TV aktivieren** kann jeder Nutzer das Theme ausschalten und wieder einschalten. Die Auswahl wird sofort über Jellyfins DisplayPreferences-API für das angemeldete Benutzerkonto auf dem Server gespeichert. Andere Geräte übernehmen sie beim nächsten vollständigen Laden der App. Der Schalter bleibt auch bei ausgeschaltetem Theme verfügbar; CSS, eigene Navigation und Fokusadapter werden beim Abschalten zurückgenommen. Die separat installierte Media Bar wird dadurch nicht deaktiviert.
+
+Der zentrale Schalter unter **Dashboard → Plugins → ElegantFin TV → TV-Theme aktivieren** bleibt zusätzlich bestehen. Ist das Plugin zentral deaktiviert, kann ein persönlicher Schalter es nicht übersteuern. Media-Bar-Fokusbedienung und die Option für Desktop-/Mobilclients bleiben als Admin-Einstellungen erhalten.
+
+**Darstellung, Diagnose und Vergleichsmodus entfallen aus den Plugin-Einstellungen.** Alte gespeicherte Werte werden ignoriert; das schlanke TV-Theme läuft im Normalbetrieb. Die älteren Update-Abschnitte unten beschreiben historische Versionen und deren damalige Debug-Optionen.
+
+Nach dem Plugin-Update Server und TV-App neu starten. Danach wirkt der persönliche Schalter ohne App-Neustart. Geprüft: 37 Frontendtests einschließlich Speicherung, erneutem Laden, Benutzerwechsel, veralteten Antworten und Netzwerkfehlern; außerdem Serverchecks einschließlich alter Konfigurationsdateien. Der Test der Einstellungsseite auf dem LG steht aus.
 
 ## Update 0.1.11.0: Kompaktere Kopfzeile
 
@@ -153,12 +163,12 @@ Im Jellyfin-Katalog nach Updates suchen, ElegantFin TV auf **0.1.1.0** aktualisi
 - Einbindung über **File Transformation**, ohne die installierten Jellyfin-Webdateien zu bearbeiten.
 - TV-Stylesheet aus unabhängigen Kopien von ElegantFin, dem Jellyfin-12-Modern-Zusatz und dem Media-Bar-Zusatz.
 - Erkennung über `layout-tv` oder webOS-User-Agent. Jellyfins Layoutklassen werden nicht verändert.
-- Standardprofil **TV / balanced**: keine über die Theme-Variablen gesteuerte Hintergrundunschärfe; weniger dekorative Karten-/Backdrop-Animationen; deutlich sichtbarer Fokus.
-- Vergleichsprofil **Volle Theme-Effekte / full**. Fokuskorrekturen bleiben in beiden Profilen aktiv.
+- Schlankes TV-Theme mit nativer Kartenbewegung, begrenzter Header-Unschärfe und deutlich sichtbarem Fokus.
+- Persönlicher Ein-/Aus-Schalter in den Anzeigeeinstellungen, zusätzlich zum zentralen Admin-Schalter.
 - Inter, Archivo Narrow und Material Symbols werden vom eigenen Jellyfin-Server ausgeliefert. Keine externen Schriftanfragen durch das Plugin.
-- Das TV-Profil verwendet die kleinere Symbolschrift des Originalthemes mit Jellyfins Icon-Fallback. Die über 5 MB große vollständige Symbolschrift wird nur bei entsprechender Verwendung im Profil **full** benötigt.
+- Das aktive TV-Theme verwendet Inter und Jellyfins vorhandene Icons. Das frühere vollständige Vergleichsprofil ist nicht mehr auswählbar.
 - Adapter für `#slides-container`, `.slide.active` und die in der gelieferten CSS-Datei verwendeten Schaltflächen.
-- Lokale, manuell gestartete Diagnose ohne Telemetrie.
+- Keine Diagnose- oder Vergleichsoptionen in der Einstellungsoberfläche.
 
 Die ursprünglichen drei Dateien im übergeordneten Ordner bleiben unverändert. `vendor/` enthält bytegleiche Kopien mit SHA256-Prüfsummen. Das neue Projekt benötigt diese übergeordneten Dateien nicht zum Bauen.
 
@@ -174,7 +184,7 @@ Das Repository und die Release-Downloads sind öffentlich erreichbar. Das Katalo
 
 1. Im Jellyfin-Dashboard die Serverversion **12.2.0** prüfen. Das Paket ist gegen diese API gebaut; andere Versionen sind nicht freigegeben.
 2. Eine zu Jellyfin 12.2 passende Version von [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) muss installiert sein. Bei einer Media-Bar-Installation kann sie bereits vorhanden sein. Das Plugin enthält diese Abhängigkeit nicht.
-3. Das Paket `artifacts/ElegantFinTV-0.1.11-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.11.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
+3. Das Paket `artifacts/ElegantFinTV-0.1.12-jf12.2.zip` entpacken. Bei beendetem Jellyfin-Server den enthaltenen Ordner `ElegantFinTV_0.1.12.0` in das **Pluginverzeichnis der aktiven Serverinstallation** kopieren. In Docker ist das üblicherweise `/config/plugins`; bei anderen Installationen den tatsächlich konfigurierten Datenpfad verwenden.
 4. Server starten. Im Dashboard unter Plugins **ElegantFin TV** öffnen. Standard: aktiviert, TV-Profil, Media-Bar-Adapter an, „Auch auf Desktop und Mobilgeräten“ aus.
 5. Die drei bisherigen CSS-Einbindungen können für den ersten TV-Test bestehen bleiben: Sie schließen `layout-tv` bereits aus. Die Dateien selbst müssen nicht bearbeitet werden. In der LG-App TV-Layout verwenden und die App vollständig schließen/neu starten, damit `index.html` neu angefordert wird.
 6. Das vorhandene Media-Bar-Plugin installiert lassen. ElegantFin TV lädt **keine zweite Media Bar** und ersetzt nicht deren Wiedergabe-, Favoriten-, Playlist- oder Trailerlogik.
@@ -188,8 +198,8 @@ Bei Nutzung des **Desktop-Layouts innerhalb der LG-App** wird das Plugin ebenfal
 Immer dieselbe Bibliothek und denselben Navigationsweg verwenden:
 
 1. Plugin deaktiviert, bisherige Oberfläche. App neu laden.
-2. Plugin aktiviert, Profil **full**. App neu laden.
-3. Plugin aktiviert, Profil **balanced**. App neu laden.
+2. Plugin aktiviert, persönlichen Theme-Schalter einschalten.
+3. Den persönlichen Theme-Schalter wieder ausschalten und denselben Abschnitt vergleichen.
 
 Jeweils erste Anzeige und erneutes Scrollen durch bereits geladene Poster vergleichen. Wenn nur die erste Anzeige langsam ist, Bildanfragen/Server/Netzwerk separat untersuchen. Wenn auch bereits geladene Reihen ruckeln, Rendering und JavaScript näher messen. Ein PC-Browser ist kein Ersatz für diesen Gerätevergleich.
 

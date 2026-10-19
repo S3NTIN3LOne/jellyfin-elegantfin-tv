@@ -29,6 +29,12 @@ Check(controller.Css().Content!.Length < controller.FullCss().Content!.Length / 
 var script = controller.Bootstrap().Content ?? "";
 Check(script.Contains("window.ElegantFinTvConfig=") && script.Contains("window.ElegantFinTv"), "bootstrap embeds config and frontend");
 Check(controller.Response.Headers.CacheControl == "no-store", "configuration is not cached");
+var bootstrapConfig = script[..script.IndexOf(';')];
+Check(!bootstrapConfig.Contains("showDiagnostics") && !bootstrapConfig.Contains("comparisonMode") && !bootstrapConfig.Contains("performance"), "retired debug settings are not sent to clients");
+var serializer = new System.Xml.Serialization.XmlSerializer(typeof(PluginConfiguration));
+using var oldConfig = new StringReader("<PluginConfiguration><Enabled>false</Enabled><Performance>full</Performance><ComparisonMode>reference</ComparisonMode><ShowDiagnostics>true</ShowDiagnostics></PluginConfiguration>");
+var migrated = (PluginConfiguration)serializer.Deserialize(oldConfig)!;
+Check(!migrated.Enabled && migrated.MediaBar, "legacy debug fields are ignored without resetting the enabled switch");
 Check(controller.Font("../tv.js") is NotFoundResult, "font route rejects traversal and unrelated resources");
 var font = controller.Font("font-0.woff2") as FileStreamResult;
 Check(font is not null && font.ContentType == "font/woff2", "font is embedded and served locally");

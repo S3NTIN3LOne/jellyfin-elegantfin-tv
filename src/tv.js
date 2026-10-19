@@ -10,6 +10,19 @@
     var loaded = false;
     var active = false;
     var disposed = false;
+    var personalEnabled = true;
+    var preferenceKey = '';
+    var preferenceClient = null;
+    var preferenceUser = '';
+    var preferenceData = null;
+    var preferenceReady = false;
+    var preferenceBusy = false;
+    var preferenceError = '';
+    var preferenceGeneration = 0;
+    var preferenceObserver = null;
+    var preferenceControl = null;
+    var preferenceFrame = 0;
+    var preferenceId = 'f723a150-5b12-4ed8-8a31-450b54b2eac9';
     var bodyObserver = null;
     var barObserver = null;
     var bar = null;
@@ -187,6 +200,132 @@
 
     function isTv() {
         return root.classList.contains('layout-tv') || /web0s|webos|netcast/i.test(navigator.userAgent);
+    }
+
+    function renderPreference() {
+        if (!preferenceControl || !preferenceControl.isConnected) return;
+        var input = preferenceControl.querySelector('input');
+        input.checked = personalEnabled;
+        input.disabled = !preferenceReady || preferenceBusy || config.enabled === false;
+        preferenceControl.querySelector('[role="status"]').textContent = preferenceError;
+    }
+
+    function refreshPreference() {
+        preferenceFrame = 0;
+        if (disposed) return;
+        var client = window.ApiClient;
+        var user = client && client.getCurrentUserId && client.getCurrentUserId();
+        var key = user ? (client.serverAddress ? client.serverAddress() : '') + '|' + user : '';
+        if (key !== preferenceKey) {
+            preferenceKey = key;
+            preferenceUser = user;
+            preferenceClient = client;
+            preferenceData = null;
+            preferenceReady = false;
+            preferenceBusy = false;
+            preferenceError = '';
+            personalEnabled = true;
+            var generation = ++preferenceGeneration;
+            reconcile();
+            if (key && client.getDisplayPreferences && client.updateDisplayPreferences) {
+                preferenceBusy = true;
+                Promise.resolve().then(function () {
+                    return client.getDisplayPreferences(preferenceId, user, 'ElegantFinTv');
+                }).then(function (data) {
+                    if (disposed || generation !== preferenceGeneration) return;
+                    preferenceData = data || {};
+                    personalEnabled = !(preferenceData.CustomPrefs && preferenceData.CustomPrefs.Enabled === 'false');
+                    preferenceReady = true;
+                    preferenceBusy = false;
+                    reconcile();
+                    renderPreference();
+                }).catch(function () {
+                    if (disposed || generation !== preferenceGeneration) return;
+                    preferenceBusy = false;
+                    preferenceError = 'Theme-Einstellung konnte nicht geladen werden. Bitte die Seite neu laden.';
+                    renderPreference();
+                });
+            }
+        }
+        // The classic TV display form exposes selectTheme. The modern form
+        // exposes name=theme. Keep the switch available when the theme is off.
+        var theme = document.querySelector('#selectTheme,select[name="theme"],input[name="theme"]');
+        if (theme && key && (!preferenceControl || !preferenceControl.isConnected)) {
+            var container = theme.closest('.selectContainer,.MuiFormControl-root') || theme.parentElement;
+            preferenceControl = document.createElement('div');
+            preferenceControl.id = 'eftv-personal-setting';
+            preferenceControl.className = 'checkboxContainer checkboxContainer-withDescription';
+            var label = document.createElement('label');
+            var checkbox = document.createElement('input', { is: 'emby-checkbox' });
+            checkbox.setAttribute('is', 'emby-checkbox');
+            checkbox.type = 'checkbox';
+            checkbox.id = 'eftv-personal-enabled';
+            var text = document.createElement('span');
+            text.textContent = 'ElegantFin TV aktivieren';
+            label.appendChild(checkbox);
+            label.appendChild(text);
+            preferenceControl.appendChild(label);
+            var description = document.createElement('div');
+            description.className = 'fieldDescription';
+            description.textContent = 'Gilt für dein Benutzerkonto. Änderungen werden sofort gespeichert. Ausgeschaltet wird die normale Jellyfin-Oberfläche verwendet.';
+            preferenceControl.appendChild(description);
+            var status = document.createElement('div');
+            status.setAttribute('role', 'status');
+            preferenceControl.appendChild(status);
+            container.parentElement.insertBefore(preferenceControl, container.nextSibling);
+            checkbox.addEventListener('change', function () {
+                if (!preferenceReady || preferenceBusy) { renderPreference(); return; }
+                var enabled = checkbox.checked;
+                var saveGeneration = preferenceGeneration;
+                var saveClient = preferenceClient;
+                var saveUser = preferenceUser;
+                var data = Object.assign({}, preferenceData, {
+                    CustomPrefs: Object.assign({}, preferenceData.CustomPrefs, { Enabled: String(enabled) })
+                });
+                preferenceBusy = true;
+                preferenceError = 'Wird gespeichert …';
+                renderPreference();
+                Promise.resolve().then(function () {
+                    return saveClient.updateDisplayPreferences(preferenceId, data, saveUser, 'ElegantFinTv');
+                }).then(function () {
+                    if (disposed || saveGeneration !== preferenceGeneration) return;
+                    preferenceData = data;
+                    personalEnabled = enabled;
+                    preferenceBusy = false;
+                    preferenceError = 'Gespeichert.';
+                    reconcile();
+                    renderPreference();
+                }).catch(function () {
+                    if (disposed || saveGeneration !== preferenceGeneration) return;
+                    preferenceBusy = false;
+                    preferenceError = 'Speichern fehlgeschlagen. Bitte erneut versuchen.';
+                    renderPreference();
+                });
+            });
+        }
+        renderPreference();
+    }
+
+    function schedulePreference() {
+        if (!preferenceFrame && !disposed) preferenceFrame = requestAnimationFrame(refreshPreference);
+    }
+
+    function startPreferences() {
+        if (preferenceObserver || !document.body) return;
+        refreshPreference();
+        preferenceObserver = new MutationObserver(function (records) {
+            var client = window.ApiClient;
+            var user = client && client.getCurrentUserId && client.getCurrentUserId();
+            var key = user ? (client.serverAddress ? client.serverAddress() : '') + '|' + user : '';
+            if (key !== preferenceKey || (!preferenceControl || !preferenceControl.isConnected) && records.some(function (record) {
+                return Array.from(record.addedNodes).some(function (node) {
+                    return node.nodeType === 1 && (node.matches('#selectTheme,[name="theme"]') || node.querySelector('#selectTheme,[name="theme"]'));
+                });
+            })) schedulePreference();
+        });
+        preferenceObserver.observe(document.body, { childList: true, subtree: true });
+        window.addEventListener('hashchange', schedulePreference);
+        document.addEventListener('viewshow', schedulePreference);
     }
 
     function homeRows() {
@@ -473,7 +612,7 @@
 
     function reconcile() {
         if (disposed) return;
-        var wanted = config.enabled !== false && (config.applyToAllClients === true || isTv());
+        var wanted = config.enabled !== false && personalEnabled && (config.applyToAllClients === true || isTv());
         if (!wanted) {
             active = false;
             root.removeAttribute('data-eftv');
@@ -489,7 +628,7 @@
         if (parts.theme && !link) {
             link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = new URL((config.performance === 'full' ? 'tv-full.css' : 'tv.css') + '?v=' + encodeURIComponent(config.version || '0.1.11'), assetBase).href;
+            link.href = new URL((config.performance === 'full' ? 'tv-full.css' : 'tv.css') + '?v=' + encodeURIComponent(config.version || '0.1.12'), assetBase).href;
             link.onload = function () { loaded = true; reconcile(); };
             link.onerror = function () { console.warn('ElegantFin TV: stylesheet could not be loaded.'); };
             document.head.appendChild(link);
@@ -722,7 +861,7 @@
                 measurementRun++;
                 function number(value) { return value === null ? 'n/v' : value; }
                 var rows = [
-                    'ElegantFin TV ' + (config.version || '0.1.11') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
+                    'ElegantFin TV ' + (config.version || '0.1.12') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
                     'Theme: ' + result.components.theme + ' · Adapter: ' + result.components.adapter + ' · Profil: ' + (result.profile || 'Standard') + ' · Chrome ' + result.browserEngine,
                     result.viewport.width + '×' + result.viewport.height + ' · DPR ' + result.viewport.pixelRatio + ' · ' + result.startedAt,
                     'Frames/s: ' + number(result.frameSamplesPerSecond) + ' · längste Pause: ' + number(result.longestFrameMs) + ' ms',
@@ -747,10 +886,17 @@
     }
 
     window.ElegantFinTv = {
-        version: config.version || '0.1.11',
+        version: config.version || '0.1.12',
         diagnose: diagnose,
         status: function () { return { active: active, tv: isTv(), mediaBarFound: !!bar, profile: root.getAttribute('data-eftv-performance'), components: components() }; },
         dispose: function () {
+            preferenceGeneration++;
+            if (preferenceObserver) preferenceObserver.disconnect();
+            if (preferenceFrame) cancelAnimationFrame(preferenceFrame);
+            window.removeEventListener('hashchange', schedulePreference);
+            document.removeEventListener('viewshow', schedulePreference);
+            document.removeEventListener('DOMContentLoaded', startPreferences);
+            if (preferenceControl) preferenceControl.remove();
             config.enabled = false;
             reconcile();
             disposed = true;
@@ -760,5 +906,7 @@
         }
     };
     document.addEventListener('DOMContentLoaded', reconcile, { once: true });
+    document.addEventListener('DOMContentLoaded', startPreferences, { once: true });
+    startPreferences();
     reconcile();
 }());
