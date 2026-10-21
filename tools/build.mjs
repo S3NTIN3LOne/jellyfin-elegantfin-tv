@@ -54,6 +54,9 @@ export async function build() {
   }
   combined.prepend(postcss.parse(await readFile(new URL('vendor/fonts/fonts.css', root), 'utf8')).nodes);
   combined.append(postcss.parse(await readFile(new URL('src/tv-overrides.css', root), 'utf8')).nodes);
+  for (const file of ['player-controls.css', 'jellyplus-support.css']) {
+    combined.append(postcss.parse(await readFile(new URL(`src/${file}`, root), 'utf8')).nodes);
+  }
   const result = await postcss([cssnano({ preset: ['default', { discardComments: { removeAll: false } }] })])
     .process(combined, { from: undefined, map: false });
   const out = new URL('src/Jellyfin.Plugin.ElegantFinTv/Web/', root);
@@ -77,6 +80,9 @@ export async function build() {
   });
   minimalFonts.walkComments(comment => comment.remove());
   minimalFonts.append(postcss.parse(await readFile(new URL('src/tv-minimal.css', root), 'utf8')).nodes);
+  for (const file of ['player-controls.css', 'jellyplus-support.css']) {
+    minimalFonts.append(postcss.parse(await readFile(new URL(`src/${file}`, root), 'utf8')).nodes);
+  }
   const minimal = await postcss([cssnano({ preset: 'default' })]).process(minimalFonts, { from: undefined, map: false });
   await writeFile(new URL('tv.css', out), minimal.css);
   await writeFile(new URL('tv.js', out), await readFile(new URL('src/tv.js', root)));

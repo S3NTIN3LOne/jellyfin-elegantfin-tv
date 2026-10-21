@@ -1,0 +1,54 @@
+/* Load after the regular ElegantFin theme (including the optional JF12 sheet). */
+.ef-seasonal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none !important;
+    user-select: none;
+    z-index: 999;
+    contain: strict;
+    /* Keep the title and controls readable; particles fade towards the bottom. */
+    mask-image: linear-gradient(#0009, #0006 55%, transparent);
+}
+
+:root:is(.layout-desktop, .layout-mobile):not(.layout-tv):not([data-eftv]) .ef-seasonal {
+    display: block;
+}
+
+.ef-seasonal-particle {
+    position: absolute;
+    top: -3rem;
+    left: var(--ef-x);
+    color: #edf8ff;
+    font: var(--ef-size)/1 sans-serif;
+    text-shadow: 0 0 7px #bce6ff80;
+    animation: ef-seasonal-fall var(--ef-duration) var(--ef-delay) linear infinite;
+}
+
+.ef-seasonal[data-season="halloween"] .ef-seasonal-particle {
+    text-shadow: 0 0 10px #ed781e80;
+    animation-name: ef-seasonal-autumn;
+}
+
+@keyframes ef-seasonal-fall {
+    from { transform: translate3d(-12px, 0, 0) rotate(0deg); }
+    50% { transform: translate3d(18px, 55vh, 0) rotate(90deg); }
+    to { transform: translate3d(-12px, calc(100vh + 4rem), 0) rotate(180deg); }
+}
+
+@keyframes ef-seasonal-autumn {
+    from { transform: translate3d(0, 0, 0) rotate(-25deg); }
+    50% { transform: translate3d(30px, 55vh, 0) rotate(35deg); }
+    to { transform: translate3d(-20px, calc(100vh + 4rem), 0) rotate(-25deg); }
+}
+
+/* Keep decorative particles out of dialogs. Playback visibility is checked in JS. */
+:root:has(.jp-overlay, dialog[open]) .ef-seasonal {
+    display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ef-seasonal { display: none !important; }
+    .ef-seasonal-particle { animation: none !important; }
+}

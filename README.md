@@ -1,8 +1,24 @@
 # ElegantFin TV für Jellyfin 12.2
 
+## Update 0.1.13: Jelly+-Integration und Player-Fokus
+
+- Jelly+ 0.1.x: Dialoge, Profiloptionen und Poster erhalten passende Farben und
+  innenliegende Fokusrahmen. Von der obersten Jelly+-Posterreihe führt Pfeil nach
+  oben zur Media Bar; Pfeil nach unten kehrt zur gewählten Karte zurück.
+- Der Fokusrahmen der Player-Kopfzeilenbuttons liegt innerhalb des Buttons und
+  wird nicht mehr durch den OSD-Container abgeschnitten.
+- Wiedergaberegler erhalten keinen rechteckigen Fokusrahmen. Der Reglerknopf
+  behält eine sichtbare Fokusmarkierung.
+
+Die CSS-Korrekturen sind in beiden TV-Profilen enthalten. Geprüft mit 39
+Frontendtests; ein Test auf dem echten LG-Gerät steht noch aus.
+Desktop-/Mobil-Erweiterungen liegen unter `desktop/` und als separate Release-Dateien
+bereit. Installation: [Saison-Effekte und Jelly+](desktop/README-seasonal.md).
+Nach dem Plugin-Update Server und TV-App neu starten.
+
 Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Übernimmt die Gestaltung aus den drei bereitgestellten CSS-Dateien, aktiviert sie auf TVs und ergänzt Fokusbedienung für eine vorhandene Media Bar.
 
-**Status: Version 0.1.12.0 ergänzt einen persönlichen Theme-Schalter und entfernt die Debug-Einstellungen.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.12). Media Bar bleibt auf **3.0.0.4**.
+**Status: Version 0.1.13.0 ergänzt Jelly+-Kompatibilität und korrigiert den Player-Fokus.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.13). Media Bar bleibt auf **3.0.0.4**.
 
 ## Update 0.1.12.0: Persönlicher Theme-Schalter
 

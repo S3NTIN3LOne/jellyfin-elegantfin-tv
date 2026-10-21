@@ -1,0 +1,60 @@
+/* ElegantFin integration for Jelly+ 0.1.x. Load after the desktop theme.
+ * Included in both TV stylesheets by the TV build. */
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-dialog {
+    box-sizing: border-box;
+    background: var(--darkerGradientPoint, #111827);
+    color: var(--textColor, #e5e7eb);
+    border: 1px solid var(--borderColor, #374151);
+    border-radius: 1rem;
+    padding: 1.5em;
+    scrollbar-width: thin;
+}
+
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-button {
+    box-sizing: border-box;
+    max-width: 100%;
+    border-radius: .6em;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    background: var(--selectorBackgroundColor, #273244);
+    color: var(--textColor, #e5e7eb);
+}
+
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-posters {
+    gap: 1em;
+    padding: .5em .3em 1.5em;
+    scroll-padding-inline: .3em;
+}
+
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+    border-radius: .6em;
+    padding: .25em;
+    box-sizing: border-box;
+    color: var(--textColor, #e5e7eb);
+    text-decoration: none;
+}
+
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster img {
+    display: block;
+    border-radius: .4em;
+}
+
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster span {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* Keep the focus inside scrollable rows and dialogs, including on webOS. */
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) :is(.jp-button:focus, .jp-poster:focus, .jp-toggle:focus-within) {
+    outline: 3px solid var(--eftv-focus, var(--accentColor, #a5b4fc)) !important;
+    outline-offset: -3px !important;
+    transform: none !important;
+}
+
+:root[data-eftv] .jp-poster { flex-basis: 10em; }
+
+@media (max-width: 600px) {
+    :root.layout-mobile:not(.layout-tv) .jp-dialog { width: 94%; padding: 1em; }
+    :root.layout-mobile:not(.layout-tv) .jp-poster { flex-basis: 8em; }
+    :root.layout-mobile:not(.layout-tv) .jp-poster img { height: 12em; }
+}

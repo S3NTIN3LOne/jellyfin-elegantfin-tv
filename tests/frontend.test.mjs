@@ -706,6 +706,38 @@ test('actual home content position includes nested page padding and late section
     await context.close();
 });
 
+test('Jelly+ posters integrate with Media Bar navigation', async () => {
+    const {page, context} = await open();
+    await page.evaluate(() => {
+        document.body.insertAdjacentHTML('beforeend', '<div class="homeSectionsContainer"><section class="jp-season"><div class="jp-posters"><a class="jp-poster" href="#/details?id=one">Movie</a></div></section></div>');
+    });
+    await page.locator('.jp-poster').focus();
+    assert.equal(await page.locator('.jp-poster').evaluate(el => getComputedStyle(el).outlineOffset), '-3px');
+    await page.keyboard.press('ArrowUp');
+    assert.equal(await page.locator('#one .play-button').evaluate(el => el === document.activeElement), true);
+    await page.keyboard.press('ArrowDown');
+    assert.equal(await page.locator('.jp-poster').evaluate(el => el === document.activeElement), true);
+    await context.close();
+});
+
+test('both TV profiles keep player button focus inside and range focus off the rectangle', async () => {
+    const page = await browser.newPage();
+    for (const sheet of [css, fullCss]) {
+        await page.setContent('<html class="layout-tv" data-eftv><body><div class="osdHeader" style="overflow:hidden;contain:paint"><button class="paper-icon-button-light" style="width:50px;height:50px">Back</button></div><div class="videoOsdBottom"><input type="range" class="mdl-slider show-focus"></div></body></html>');
+        await page.addStyleTag({content: sheet});
+        await page.locator('button').focus();
+        const focus = await page.locator('button').evaluate(el => {
+            const style = getComputedStyle(el);
+            return { offset: style.outlineOffset, transform: style.transform, outline: style.outlineStyle };
+        });
+        assert.deepEqual(focus, {offset: '-3px', transform: 'none', outline: 'solid'});
+        await page.locator('input').focus();
+        assert.equal(await page.locator('input').evaluate(el => getComputedStyle(el).outlineStyle), 'none');
+        assert.equal(await page.locator('input').evaluate(el => getComputedStyle(el).boxShadow), 'none');
+    }
+    await page.close();
+});
+
 test('Up enters Media Bar from the first row and Down returns without stealing lower-row navigation', async () => {
     const {page, context} = await open();
     await page.evaluate(() => {

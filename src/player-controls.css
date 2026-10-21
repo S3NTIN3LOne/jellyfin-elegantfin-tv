@@ -1,0 +1,22 @@
+/* Keep player focus within the clipped OSD header in both TV profiles. */
+:root[data-eftv] .osdHeader :is(.paper-icon-button-light, .headerButton, .MuiIconButton-root):focus {
+    outline: var(--eftv-focus-width, 2px) solid var(--eftv-focus, #fff) !important;
+    outline-offset: -3px !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border-radius: 50% !important;
+}
+
+/* A range is focused through its thumb, never through a rectangular outline. */
+:root[data-eftv] :is(.videoOsdBottom, .osdControls) :is(input[type="range"], .mdl-slider, .sliderContainer, .mdl-slider-container, [role="slider"]):is(:focus, :focus-visible, :focus-within) {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+:root[data-eftv] :is(.videoOsdBottom, .osdControls) input[type="range"]:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 2px var(--eftv-focus, #fff) !important;
+}
+
+:root[data-eftv] :is(.videoOsdBottom, .osdControls) input[type="range"]:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 2px var(--eftv-focus, #fff) !important;
+}

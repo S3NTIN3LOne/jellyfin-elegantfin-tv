@@ -334,7 +334,7 @@
 
     function firstHomeItems(rows) {
         if (!rows) return [];
-        var items = Array.from(rows.querySelectorAll('.card[tabindex],.card a[href],.homeLibraryButton')).filter(visible);
+        var items = Array.from(rows.querySelectorAll('.card[tabindex],.card a[href],.homeLibraryButton,.jp-poster[href]')).filter(visible);
         if (!items.length) return items;
         var firstTop = Math.min.apply(null, items.map(function (item) { return item.getBoundingClientRect().top; }));
         return items.filter(function (item) { return item.getBoundingClientRect().top < firstTop + 10; });
@@ -628,7 +628,7 @@
         if (parts.theme && !link) {
             link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = new URL((config.performance === 'full' ? 'tv-full.css' : 'tv.css') + '?v=' + encodeURIComponent(config.version || '0.1.12'), assetBase).href;
+            link.href = new URL((config.performance === 'full' ? 'tv-full.css' : 'tv.css') + '?v=' + encodeURIComponent(config.version || '0.1.13'), assetBase).href;
             link.onload = function () { loaded = true; reconcile(); };
             link.onerror = function () { console.warn('ElegantFin TV: stylesheet could not be loaded.'); };
             document.head.appendChild(link);
@@ -861,7 +861,7 @@
                 measurementRun++;
                 function number(value) { return value === null ? 'n/v' : value; }
                 var rows = [
-                    'ElegantFin TV ' + (config.version || '0.1.12') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
+                    'ElegantFin TV ' + (config.version || '0.1.13') + ' · ' + result.components.mode + ' · Lauf ' + measurementRun,
                     'Theme: ' + result.components.theme + ' · Adapter: ' + result.components.adapter + ' · Profil: ' + (result.profile || 'Standard') + ' · Chrome ' + result.browserEngine,
                     result.viewport.width + '×' + result.viewport.height + ' · DPR ' + result.viewport.pixelRatio + ' · ' + result.startedAt,
                     'Frames/s: ' + number(result.frameSamplesPerSecond) + ' · längste Pause: ' + number(result.longestFrameMs) + ' ms',
@@ -886,7 +886,7 @@
     }
 
     window.ElegantFinTv = {
-        version: config.version || '0.1.12',
+        version: config.version || '0.1.13',
         diagnose: diagnose,
         status: function () { return { active: active, tv: isTv(), mediaBarFound: !!bar, profile: root.getAttribute('data-eftv-performance'), components: components() }; },
         dispose: function () {

@@ -25,7 +25,7 @@ foreach (var path in new[] { "index.html", "/web/index.html", @"C:\web\index.htm
 var controller = new AssetsController { ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() } };
 Check(controller.Css().Content?.Contains("[data-eftv]") == true, "generated CSS embedded in plugin");
 Check(controller.FullCss().Content?.Contains("[data-eftv]") == true, "full comparison CSS embedded in plugin");
-Check(controller.Css().Content!.Length < controller.FullCss().Content!.Length / 10, "minimal CSS is independent of the full desktop bundle");
+Check(controller.Css().Content!.Length < 25000 && !controller.Css().Content!.Contains("--ef12-appBarHeight"), "minimal CSS stays below 25 KB and excludes the desktop token bridge");
 var script = controller.Bootstrap().Content ?? "";
 Check(script.Contains("window.ElegantFinTvConfig=") && script.Contains("window.ElegantFinTv"), "bootstrap embeds config and frontend");
 Check(controller.Response.Headers.CacheControl == "no-store", "configuration is not cached");
