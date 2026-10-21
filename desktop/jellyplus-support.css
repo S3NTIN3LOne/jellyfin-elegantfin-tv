@@ -21,27 +21,58 @@
 }
 
 :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-posters {
-    gap: 1em;
-    padding: .5em .3em 1.5em;
-    scroll-padding-inline: .3em;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--itemColumnGap, 1em);
+    overflow-x: auto;
+    padding: .375em 0 1em;
+    scroll-padding-inline: .375em;
+    scroll-snap-type: x proximity;
 }
 
 :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
-    border-radius: .6em;
-    padding: .25em;
+    --padding: .375em;
+    --effectiveWidth: calc(100vw - var(--padding) * 2 - var(--sidePadding, 3.3%) * 2);
+    --cardWidth: calc(var(--effectiveWidth) / var(--cardCount, 7) - var(--itemColumnGap, 1em));
+    flex: 0 0 var(--cardWidth);
+    min-width: 0;
+    width: var(--cardWidth);
+    border-radius: var(--smallRadius, .5em);
+    padding: var(--padding);
     box-sizing: border-box;
     color: var(--textColor, #e5e7eb);
     text-decoration: none;
+    scroll-snap-align: start;
 }
 
 :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster img {
     display: block;
-    border-radius: .4em;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: var(--smallRadius, .5em);
+    background: var(--selectorBackgroundColor, #273244);
 }
 
 :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster span {
-    white-space: normal;
-    overflow-wrap: anywhere;
+    margin-top: .5em;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-season > .sectionTitle {
+    margin-block: 0 .5em;
+    padding: 0;
+    color: var(--textColor, #e5e7eb);
+}
+
+@media (hover: hover) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster:hover {
+        background: var(--selectorBackgroundColor, #273244);
+    }
 }
 
 /* Keep the focus inside scrollable rows and dialogs, including on webOS. */
@@ -53,8 +84,104 @@
 
 :root[data-eftv] .jp-poster { flex-basis: 10em; }
 
+:root.layout-mobile:not(.layout-tv) .jp-poster {
+    --padding: 1px;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+}
+
+@media (orientation: landscape) and (max-height: 40em) {
+    :root.layout-mobile:not(.layout-tv) .jp-poster {
+        --effectiveWidth: calc(65vw - var(--sidePadding, 3.3%) * 2);
+    }
+}
+
 @media (max-width: 600px) {
     :root.layout-mobile:not(.layout-tv) .jp-dialog { width: 94%; padding: 1em; }
-    :root.layout-mobile:not(.layout-tv) .jp-poster { flex-basis: 8em; }
-    :root.layout-mobile:not(.layout-tv) .jp-poster img { height: 12em; }
+}
+
+/* Match the base theme overflow-poster breakpoints. */
+@media (min-width: 300em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 15
+
+    }
+}
+@media (max-width: 300em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 14
+
+    }
+}
+@media (max-width: 270em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 13
+
+    }
+}
+@media (max-width: 240em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 12
+
+    }
+}
+@media (max-width: 220em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 11
+
+    }
+}
+@media (max-width: 200em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 10
+
+    }
+}
+@media (max-width: 170em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 9
+
+    }
+}
+@media (max-width: 140em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 8
+
+    }
+}
+@media (max-width: 120em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 7
+
+    }
+}
+@media (max-width: 100em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 7
+
+    }
+}
+@media (max-width: 80em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 6
+
+    }
+}
+@media (max-width: 62em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 5
+
+    }
+}
+@media (max-width: 48.125em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 4
+
+    }
+}
+@media (max-width: 30em) {
+    :root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .jp-poster {
+        --cardCount: 3
+
+    }
 }

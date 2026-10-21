@@ -65,6 +65,25 @@ Media-Bar-Vorschauvideos schalten die Partikel nicht ab; echte Wiedergabe und
 geöffnete Jelly+-Dialoge dagegen schon. Die Partikel liegen über dem Seiteninhalt.
 Die Empfehlungen von Jelly+ verwenden die Serverzeit, die Effekte die Browserzeit.
 
+Die Jelly+-Empfehlungskarten verwenden die gleichen Größenstufen, Abstände und
+Rundungen wie die normalen ElegantFin-Poster. Lange Titel werden mit Auslassung
+gekürzt, die vollständigen Titel bleiben als Linktext erhalten. Die Zeile ist
+horizontal scrollbar. Die Erweiterung ergänzt keine Medienaktionen, Fortschritts-
+oder Gesehen-Anzeigen, die Jelly+ selbst nicht liefert.
+
+**Fehlende Jelly+-Optionen in der modernen Oberfläche:** Der lokale Jelly+-Client
+0.1.1 bindet Profiloptionen über `#languagePreferencesPage .settingsContainer` und
+Medienaktionen über `.actionSheetContent` ein. Die moderne Oberfläche verwendet
+andere Einstellungen und Menüs; Jelly+ muss diese selbst unterstützen. CSS kann
+fehlende Steuerelemente und deren Aktionen nicht hinzufügen. Im klassischen
+Desktop-Webclient bleiben die vorhandenen Jelly+-Optionen auch mit dem Theme
+sichtbar. Watch Together setzt außerdem eine aktivierte Profilfreigabe voraus.
+
+Prüfung der Darstellung und der klassischen/modernen Plugin-Einbindung:
+`node --test tests/jellyplus-theme.test.cjs` im übergeordneten Theme-Arbeitsordner.
+Der Vergleich der Plugin-Einbindung verwendet den benachbarten Jelly+-Quellcode,
+falls verfügbar; der Größenvergleich benötigt ihn nicht.
+
 ## Prüfung
 
 `node --test tests/seasonal.test.cjs`

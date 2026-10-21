@@ -5,12 +5,12 @@
         "description":  "Minimal ElegantFin design with native Jellyfin motion and Media Bar focus support. Requires a compatible File Transformation plugin. LG C4 integration still requires on-device verification.",
         "versions":  [
                          {
-                             "changelog":  "Add Jelly+ styling and seasonal-row remote navigation. Keep player button focus inside clipped OSD headers and remove rectangular range focus. Desktop seasonal and Jelly+ extensions are available as separate release assets.",
-                             "version":  "0.1.13.0",
-                             "checksum":  "f53f92c717f9b07f098cef2ea641fe64",
-                             "timestamp":  "2026-10-21T18:48:03Z",
+                             "changelog":  "Match Jelly+ seasonal recommendations to regular ElegantFin poster sizes, spacing, corners and responsive breakpoints. Keep 2:3 artwork and truncate long titles without widening the page. Document that missing modern-client actions require Jelly+ support.",
+                             "version":  "0.1.14.0",
+                             "checksum":  "d90b339aa70148e1e7e3bc5a58faec99",
+                             "timestamp":  "2026-10-21T19:06:13Z",
                              "targetAbi":  "12.2.0.0",
-                             "sourceUrl":  "https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.13/ElegantFinTV-0.1.13-jf12.2-catalog.zip"
+                             "sourceUrl":  "https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.14/ElegantFinTV-0.1.14-jf12.2-catalog.zip"
                          }
                      ],
         "category":  "General",
