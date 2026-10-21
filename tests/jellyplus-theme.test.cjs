@@ -48,7 +48,7 @@ test('actual Jelly+ classic options remain visible with theme; modern options ar
             await page.route('https://**', route => route.abort());
             await page.setContent(`<html class="layout-desktop"><body>${modern
                 ? '<div class="MuiAppBar-root"></div><main><h1>Playback</h1><div class="MuiFormGroup-root"></div></main><button class="MuiIconButton-root" data-testid="MoreVertIcon">Menu</button><ul class="MuiMenu-list" role="menu"><li role="menuitem">Play</li></ul>'
-                : '<div id="languagePreferencesPage"><div class="settingsContainer"></div></div><div data-id="abc" data-type="Movie"><button class="btnMoreCommands">Menu</button></div><div class="actionSheetContent"><button class="actionSheetMenuItem">Play</button></div>'}</body></html>`);
+                : '<div id="languagePreferencesPage"><div class="settingsContainer"><form></form></div></div><div data-id="abc" data-type="Movie"><button class="btnMoreCommands">Menu</button></div><div class="actionSheetContent"><button class="actionSheetMenuItem">Play</button></div>'}</body></html>`);
             if (themed) for (const content of sheets) await page.addStyleTag({content});
             await page.evaluate(() => {
                 window.ApiClient = {getCurrentUserId:()=>'user', getUrl:path=>path, accessToken:()=>'fixture'};
@@ -65,9 +65,44 @@ test('actual Jelly+ classic options remain visible with theme; modern options ar
                 await page.waitForSelector('.jp-watch');
                 assert.equal(await page.locator('.jp-preferences').isVisible(),true);
                 assert.equal(await page.locator('.jp-watch').isVisible(),true);
-                assert.equal(await page.locator('.jp-menu .jp-button').count(),2);
+                assert.equal(await page.locator('.jp-menu button').count(),2);
             }
             await page.close();
         }
+    } finally { await browser.close(); }
+});
+
+test('profile hides reset while keeping save and admin reset available; libraries keep native order', async () => {
+    const browser = await launch();
+    try {
+        const page = await browser.newPage({viewport:{width:1280,height:800}});
+        await page.route('https://**', route => route.abort());
+        await page.setContent('<html class="layout-desktop"><body><div id="userProfilePage" class="userPreferencesPage"><form class="updatePasswordForm"><div class="detailSection"><div><button type="submit" class="emby-button raised button-submit block">Passwort speichern</button><button type="button" id="btnResetPassword" class="emby-button raised button-cancel block">Passwort zurücksetzen</button></div></div></form></div><div class="homeSectionsContainer"><section class="verticalSection"><div class="itemsContainer homeLibraryButtonContainer" style="display:flex"><a class="homeLibraryButton" href="#movies">Filme</a><a class="homeLibraryButton" href="#tv">Serien</a><a class="homeLibraryButton" href="#music">Musik</a></div></section></div></body></html>');
+        await page.addStyleTag({content:'.homeLibraryButton:nth-child(2){order:-1}.hide{display:none!important}'});
+        for (const content of sheets) await page.addStyleTag({content});
+        await page.waitForTimeout(300); // Let the base theme's shadow transition finish.
+        const result = await page.evaluate(() => {
+            const save = document.querySelector('.button-submit');
+            const reset = document.querySelector('#btnResetPassword');
+            return {position:getComputedStyle(save).position, shadow:getComputedStyle(save).boxShadow,
+                order:[...document.querySelectorAll('.homeLibraryButton')].sort((a,b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left).map(el=>el.textContent)};
+        });
+        assert.equal(result.position,'static');
+        assert.equal(result.shadow,'none');
+        assert.equal(await page.locator('#btnResetPassword').isVisible(),false);
+        assert.equal(await page.locator('.button-submit').isVisible(),true);
+        assert.deepEqual(result.order,['Filme','Serien','Musik']);
+        await page.evaluate(() => {
+            document.querySelector('.homeLibraryButtonContainer').classList.remove('homeLibraryButtonContainer');
+            document.querySelectorAll('.homeLibraryButton').forEach((el,i) => {
+                el.className = 'card backdropCard';
+                el.dataset.type = 'UserView';
+                el.style.order = String(2-i);
+            });
+        });
+        assert.deepEqual(await page.locator('[data-type="UserView"]').evaluateAll(items => items
+            .sort((a,b) => a.getBoundingClientRect().left-b.getBoundingClientRect().left).map(el=>el.textContent)),['Filme','Serien','Musik']);
+        await page.evaluate(() => { document.querySelector('#userProfilePage').id = 'adminUserPage'; });
+        assert.equal(await page.locator('#btnResetPassword').isVisible(),true,'admin reset stays available');
     } finally { await browser.close(); }
 });

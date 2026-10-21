@@ -65,6 +65,25 @@ Media-Bar-Vorschauvideos schalten die Partikel nicht ab; echte Wiedergabe und
 geöffnete Jelly+-Dialoge dagegen schon. Die Partikel liegen über dem Seiteninhalt.
 Die Empfehlungen von Jelly+ verwenden die Serverzeit, die Effekte die Browserzeit.
 
+Die Effekte sind auf den oberen Seitenbereich begrenzt. Auf der Startseite wird
+die untere Kante aus Media Bar und „Meine Medien“ ermittelt, sowohl für
+Bibliotheksbuttons als auch für Bibliothekskacheln. Scrollen, Größenänderungen und
+nachgeladene Reihen aktualisieren die Grenze. Fehlen diese Bereiche, beträgt die
+Höhe höchstens 65 Prozent des Fensters bzw. 650 Pixel. Auch Detailseiten verwenden
+diese begrenzte Höhe. Die Partikel werden am Rand abgeschnitten und ausgeblendet.
+
+Das ergänzende CSS begrenzt auch ältere Saison-Scripte auf diese Rückfallhöhe.
+Für die genaue Messung und das Mitführen beim Scrollen muss die aktualisierte
+`ElegantFin-seasonal.js` geladen werden. Ältere Jelly+-Versionen laden noch eine
+fest eingetragene Version 0.1.13; deren Loader muss beim Ausrollen ebenfalls auf
+die neue veröffentlichte Script-Version aktualisiert werden.
+
+Auf der persönlichen Profilseite blendet die Ergänzung „Passwort zurücksetzen“
+aus. „Passwort speichern“ bleibt sichtbar und liegt ohne überdeckenden Schatten
+im normalen Formularfluss. Der Adminbereich behält seine Reset-Aktion. Die
+Bibliotheken unter „Meine Medien“ folgen Jellyfins gespeicherter DOM-Reihenfolge;
+die Ergänzung setzt keine eigene alphabetische oder typbasierte Sortierung.
+
 Die Jelly+-Empfehlungskarten verwenden die gleichen Größenstufen, Abstände und
 Rundungen wie die normalen ElegantFin-Poster. Lange Titel werden mit Auslassung
 gekürzt, die vollständigen Titel bleiben als Linktext erhalten. Die Zeile ist

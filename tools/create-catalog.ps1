@@ -2,13 +2,13 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$inputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.14-jf12.2.zip'
-$outputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.14-jf12.2-catalog.zip'
+$inputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.15-jf12.2.zip'
+$outputPath = Join-Path $projectRoot 'artifacts/ElegantFinTV-0.1.15-jf12.2-catalog.zip'
 $inputZip = [IO.Compression.ZipFile]::OpenRead($inputPath)
 $outputStream = [IO.File]::Open($outputPath, [IO.FileMode]::Create)
 $outputZip = [IO.Compression.ZipArchive]::new($outputStream, [IO.Compression.ZipArchiveMode]::Create)
 try {
-    $prefix = 'ElegantFinTV_0.1.14.0/'
+    $prefix = 'ElegantFinTV_0.1.15.0/'
     foreach ($entry in $inputZip.Entries) {
         if (!$entry.FullName.StartsWith($prefix)) { throw 'Unexpected manual-package structure' }
         $name = $entry.FullName.Substring($prefix.Length)
@@ -28,10 +28,10 @@ $manifest = @(@{
     owner = 'S3NTIN3LOne'
     category = 'General'
     versions = @(@{
-        version = '0.1.14.0'
-        changelog = 'Match Jelly+ seasonal recommendations to regular ElegantFin poster sizes, spacing, corners and responsive breakpoints. Keep 2:3 artwork and truncate long titles without widening the page. Document that missing modern-client actions require Jelly+ support.'
+        version = '0.1.15.0'
+        changelog = 'Limit seasonal particles to Media Bar and My Media with scroll and resize tracking. Hide password reset on the personal profile while keeping save and admin reset. Preserve the configured library order. Desktop assets are separate downloads; Jelly+ 0.1.5.0 updates its seasonal script loader.'
         targetAbi = '12.2.0.0'
-        sourceUrl = 'https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.14/ElegantFinTV-0.1.14-jf12.2-catalog.zip'
+        sourceUrl = 'https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.15/ElegantFinTV-0.1.15-jf12.2-catalog.zip'
         checksum = (Get-FileHash -LiteralPath $outputPath -Algorithm MD5).Hash.ToLowerInvariant()
         timestamp = [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
     })

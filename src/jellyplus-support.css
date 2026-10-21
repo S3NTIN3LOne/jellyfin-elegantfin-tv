@@ -100,6 +100,38 @@
     :root[data-eftv].layout-mobile:not(.layout-tv) .jp-dialog { width: 94%; padding: 1em; }
 }
 
+/* Keep password actions in normal document flow. The theme's sticky submit
+ * shadow otherwise paints over the separate password-reset action. */
+:root[data-eftv] .updatePasswordForm .button-submit {
+    position: static !important;
+    bottom: auto;
+    box-shadow: none;
+    z-index: auto !important;
+}
+
+:root[data-eftv] #userProfilePage #btnResetPassword {
+    display: none !important;
+}
+
+/* Also cap effects loaded by older Jelly+ versions that still pin the 0.1.13
+ * script. New scripts set the measured height through this same variable. */
+:root[data-eftv] .ef-seasonal {
+    inset: 0 0 auto;
+    height: var(--ef-seasonal-height, min(65vh, 650px));
+}
+
+/* Preserve Jellyfin's user-specific DOM order for both library presentations.
+ * Do not sort by library name, collection type or a translated section title. */
+:root[data-eftv] :is(.homeLibraryButtonContainer, .homeSectionsContainer .itemsContainer:has(> [data-type="UserView"], > [data-type="CollectionFolder"])) {
+    flex-direction: row;
+}
+
+:root[data-eftv] :is(.homeLibraryButtonContainer, .homeSectionsContainer .itemsContainer) > :is(.homeLibraryButton, [data-type="UserView"], [data-type="CollectionFolder"]) {
+    order: 0 !important;
+    grid-column: auto;
+    grid-row: auto;
+}
+
 /* Match the base theme overflow-poster breakpoints. */
 @media (min-width: 300em) {
     :root[data-eftv] .jp-poster {

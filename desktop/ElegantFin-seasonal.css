@@ -2,7 +2,8 @@
 .ef-seasonal {
     display: none;
     position: fixed;
-    inset: 0;
+    inset: 0 0 auto;
+    height: var(--ef-seasonal-height, min(65vh, 650px));
     overflow: hidden;
     pointer-events: none !important;
     user-select: none;
@@ -33,14 +34,14 @@
 
 @keyframes ef-seasonal-fall {
     from { transform: translate3d(-12px, 0, 0) rotate(0deg); }
-    50% { transform: translate3d(18px, 55vh, 0) rotate(90deg); }
-    to { transform: translate3d(-12px, calc(100vh + 4rem), 0) rotate(180deg); }
+    50% { transform: translate3d(18px, calc(var(--ef-seasonal-height, 65vh) * .55), 0) rotate(90deg); }
+    to { transform: translate3d(-12px, calc(var(--ef-seasonal-height, 65vh) + 4rem), 0) rotate(180deg); }
 }
 
 @keyframes ef-seasonal-autumn {
     from { transform: translate3d(0, 0, 0) rotate(-25deg); }
-    50% { transform: translate3d(30px, 55vh, 0) rotate(35deg); }
-    to { transform: translate3d(-20px, calc(100vh + 4rem), 0) rotate(-25deg); }
+    50% { transform: translate3d(30px, calc(var(--ef-seasonal-height, 65vh) * .55), 0) rotate(35deg); }
+    to { transform: translate3d(-20px, calc(var(--ef-seasonal-height, 65vh) + 4rem), 0) rotate(-25deg); }
 }
 
 /* Keep decorative particles out of dialogs. Playback visibility is checked in JS. */

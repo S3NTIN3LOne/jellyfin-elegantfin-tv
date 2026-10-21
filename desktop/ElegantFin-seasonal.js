@@ -16,6 +16,9 @@
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let overlay, currentKey = '', item = null, pending = false, generation = 0;
     let retryAfter = 0, stopped = false;
+    let boundsFrame = 0;
+    const boundsObserver = new ResizeObserver(scheduleBounds);
+    let boundsTargets = [];
 
     function seasonFor(date, movie) {
         if (movie?.Type !== 'Movie') return '';
@@ -29,11 +32,42 @@
     function clear() {
         overlay?.remove();
         overlay = null;
+        boundsObserver.disconnect();
+        boundsTargets = [];
+    }
+
+    function updateBounds() {
+        boundsFrame = 0;
+        if (!overlay) return;
+        const home = /(?:^|\/)home(?:\.html)?\/?(?:\?|$)/i.test(location.hash.slice(1) || location.pathname + location.search);
+        const targets = home ? [
+            ...document.querySelectorAll('#slides-container'),
+            ...document.querySelectorAll('.homeLibraryButtonContainer, .homeSectionsContainer .itemsContainer, #homeTab .itemsContainer')
+        ].filter(element => visible(element) && (element.id === 'slides-container' ||
+            element.matches('.homeLibraryButtonContainer') || element.querySelector('[data-type="UserView"], [data-type="CollectionFolder"]')))
+            .map(element => element.id === 'slides-container' ? element : element.closest('.verticalSection') || element) : [];
+        const unique = [...new Set(targets)];
+        if (unique.length !== boundsTargets.length || unique.some((element, i) => element !== boundsTargets[i])) {
+            boundsObserver.disconnect();
+            unique.forEach(element => boundsObserver.observe(element));
+            boundsTargets = unique;
+        }
+        const bottom = unique.length ? Math.max(...unique.map(element => element.getBoundingClientRect().bottom))
+            : Math.min(innerHeight * .65, 650);
+        const height = Math.max(0, Math.min(innerHeight, Math.ceil(bottom)));
+        overlay.style.setProperty('--ef-seasonal-height', `${height}px`);
+        // Older Jelly+ versions supply their own CSS and suppress the CSS loader.
+        overlay.style.height = `${height}px`;
+        overlay.style.visibility = height ? '' : 'hidden';
+    }
+
+    function scheduleBounds() {
+        if (!stopped && overlay && !boundsFrame) boundsFrame = requestAnimationFrame(updateBounds);
     }
 
     function render(season) {
         if (!season) return clear();
-        if (overlay?.dataset.season === season) return;
+        if (overlay?.dataset.season === season) return updateBounds();
         clear();
         overlay = document.createElement('div');
         overlay.className = 'ef-seasonal';
@@ -51,6 +85,7 @@
             overlay.append(particle);
         }
         document.body.append(overlay);
+        updateBounds();
     }
 
     function routeId() {
@@ -122,6 +157,8 @@
     window.addEventListener('hashchange', update);
     window.addEventListener('popstate', update);
     document.addEventListener('visibilitychange', update);
+    document.addEventListener('scroll', scheduleBounds, true);
+    window.addEventListener('resize', scheduleBounds);
     motion.addEventListener('change', update);
     window.ElegantFinSeasonal = {
         seasonFor,
@@ -133,6 +170,9 @@
             window.removeEventListener('popstate', update);
             document.removeEventListener('visibilitychange', update);
             motion.removeEventListener('change', update);
+            document.removeEventListener('scroll', scheduleBounds, true);
+            window.removeEventListener('resize', scheduleBounds);
+            cancelAnimationFrame(boundsFrame);
             clear();
         }
     };

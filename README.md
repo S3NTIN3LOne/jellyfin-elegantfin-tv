@@ -1,5 +1,25 @@
 # ElegantFin TV für Jellyfin 12.2
 
+## Update 0.1.15: Begrenzte Saisoneffekte und Profilkorrekturen
+
+- Browser-Saisoneffekte enden an der Unterkante von Media Bar/„Meine Medien“.
+  Die Grenze folgt Scrollen, Größenänderungen und nachgeladenen Reihen.
+- Auf der persönlichen Profilseite ist „Passwort zurücksetzen“ ausgeblendet.
+  „Passwort speichern“ bleibt im normalen Formularfluss; Admin-Reset bleibt verfügbar.
+- Die Bibliotheken innerhalb von „Meine Medien“ folgen der gespeicherten
+  Jellyfin-Reihenfolge ohne eigene Sortierung.
+
+Für Browser den bisherigen Jelly+-Import ersetzen:
+
+```css
+@import url("https://cdn.jsdelivr.net/gh/S3NTIN3LOne/jellyfin-elegantfin-tv@v0.1.15/desktop/jellyplus-support.css");
+```
+
+Jelly+ 0.1.5.0 lädt das neue Saison-Script automatisch. Bei eigener Script-Einbindung
+die Version in der URL ebenfalls auf `v0.1.15` ändern. CSS allein lädt kein Script.
+TV-Plugin und gegebenenfalls Jelly+ aktualisieren, danach Server und Apps neu starten.
+Geprüft: 44 Browser-Tests, Serverchecks und Release-Build. Ein Test auf dem LG steht aus.
+
 ## Update 0.1.14: Einheitliche Jelly+-Empfehlungskarten
 
 Die saisonalen Jelly+-Empfehlungen verwenden die Größenstufen, Abstände und
@@ -41,7 +61,7 @@ Nach dem Plugin-Update Server und TV-App neu starten.
 
 Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Übernimmt die Gestaltung aus den drei bereitgestellten CSS-Dateien, aktiviert sie auf TVs und ergänzt Fokusbedienung für eine vorhandene Media Bar.
 
-**Status: Version 0.1.14.0 vereinheitlicht die saisonalen Jelly+-Empfehlungskarten.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.14). Media Bar bleibt auf **3.0.0.4**.
+**Status: Version 0.1.15.0 begrenzt Saisoneffekte und korrigiert Profilaktionen und Bibliotheksreihenfolge.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.15). Media Bar bleibt auf **3.0.0.4**.
 
 ## Update 0.1.12.0: Persönlicher Theme-Schalter
 
