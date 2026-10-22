@@ -84,6 +84,17 @@ im normalen Formularfluss. Der Adminbereich behält seine Reset-Aktion. Die
 Bibliotheken unter „Meine Medien“ folgen Jellyfins gespeicherter DOM-Reihenfolge;
 die Ergänzung setzt keine eigene alphabetische oder typbasierte Sortierung.
 
+Die Profilregel berücksichtigt neben `#userProfilePage` auch die persönlichen
+Seitenklassen `.userPreferencesPage` und `.userPasswordPage`. Bei Jellyfins
+nativen Auswahldialogen (etwa Watch Together und ausgeblendete Medien) liegt der
+textuelle „Abbrechen“-Button am Ende der Auswahlliste. Der separate Zurück-Pfeil
+im TV-Modus behält seine native Position.
+
+Alle `@import`-Zeilen müssen vor normalen CSS-Regeln stehen. Ein Import am Ende
+eines CSS-Blocks wird vom Browser ignoriert. Zum Prüfen muss die tatsächlich
+geladene Version der Erweiterung diese Regeln enthalten; ältere feste
+Versions-URLs aktualisieren sich nicht automatisch.
+
 Die Jelly+-Empfehlungskarten verwenden die gleichen Größenstufen, Abstände und
 Rundungen wie die normalen ElegantFin-Poster. Lange Titel werden mit Auslassung
 gekürzt, die vollständigen Titel bleiben als Linktext erhalten. Die Zeile ist

@@ -109,8 +109,30 @@
     z-index: auto !important;
 }
 
-:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) #userProfilePage #btnResetPassword {
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) :is(#userProfilePage, .userPreferencesPage, .userPasswordPage) #btnResetPassword {
     display: none !important;
+}
+
+/* Jelly+ uses native action sheets. Their textual cancel button shares a class
+ * with the TV back icon, but belongs at the end of the scroller, not at top left.
+ * Scope to the footer so the separate TV back icon keeps its native position. */
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .actionSheet .buttons:has(> .btnCloseActionSheet) {
+    box-sizing: border-box;
+    width: 100%;
+    padding: .75em .5em .25em;
+    flex-shrink: 0;
+}
+
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .actionSheet .buttons > .btnCloseActionSheet {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    min-height: 2.75em;
+    margin: 0;
+    white-space: normal;
 }
 
 /* Also cap effects loaded by older Jelly+ versions that still pin the 0.1.13

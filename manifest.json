@@ -5,12 +5,12 @@
         "description":  "Minimal ElegantFin design with native Jellyfin motion and Media Bar focus support. Requires a compatible File Transformation plugin. LG C4 integration still requires on-device verification.",
         "versions":  [
                          {
-                             "changelog":  "Limit seasonal particles to Media Bar and My Media with scroll and resize tracking. Hide password reset on the personal profile while keeping save and admin reset. Preserve the configured library order. Desktop assets are separate downloads; Jelly+ 0.1.5.0 updates its seasonal script loader.",
-                             "version":  "0.1.15.0",
-                             "checksum":  "ecd0f11360820ad8ec27be1029f3d3fe",
-                             "timestamp":  "2026-10-21T20:08:27Z",
+                             "changelog":  "Place native selection-dialog cancellation below the choices so it cannot cover titles or descriptions in Watch Together and hidden-media dialogs. Preserve the separate TV back icon. Hide password reset across personal profile page variants while retaining save and admin reset. Browser CSS is a separate release asset.",
+                             "version":  "0.1.16.0",
+                             "checksum":  "9c52cedff05c0affb7b4db5e1e0334b4",
+                             "timestamp":  "2026-10-21T20:38:06Z",
                              "targetAbi":  "12.2.0.0",
-                             "sourceUrl":  "https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.15/ElegantFinTV-0.1.15-jf12.2-catalog.zip"
+                             "sourceUrl":  "https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/download/v0.1.16/ElegantFinTV-0.1.16-jf12.2-catalog.zip"
                          }
                      ],
         "category":  "General",

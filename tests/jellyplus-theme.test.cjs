@@ -102,7 +102,73 @@ test('profile hides reset while keeping save and admin reset available; librarie
         });
         assert.deepEqual(await page.locator('[data-type="UserView"]').evaluateAll(items => items
             .sort((a,b) => a.getBoundingClientRect().left-b.getBoundingClientRect().left).map(el=>el.textContent)),['Filme','Serien','Musik']);
-        await page.evaluate(() => { document.querySelector('#userProfilePage').id = 'adminUserPage'; });
+        await page.evaluate(() => { document.querySelector('#userProfilePage').id = 'personalProfileVariant'; });
+        assert.equal(await page.locator('#btnResetPassword').isVisible(),false,'personal preference class is sufficient without the original page ID');
+        await page.evaluate(() => { document.querySelector('#personalProfileVariant').className = 'userPasswordPage'; });
+        assert.equal(await page.locator('#btnResetPassword').isVisible(),false,'personal password-page variant is supported');
+        await page.evaluate(() => {
+            const profile = document.querySelector('#personalProfileVariant');
+            profile.id = 'adminUserPage'; profile.className = 'dashboardPage';
+        });
         assert.equal(await page.locator('#btnResetPassword').isVisible(),true,'admin reset stays available');
+    } finally { await browser.close(); }
+});
+
+test('native selection-sheet cancellation follows choices without covering title or text in desktop, mobile and TV', async () => {
+    const browser = await launch();
+    try {
+        const page = await browser.newPage();
+        await page.route('https://**', route => route.abort());
+        // Native actionSheet.ts places the text cancel button inside .buttons
+        // at the end of .actionSheetScroller, and a separate back icon on TVs.
+        // Native SCSS positions both with .btnCloseActionSheet {position:fixed}.
+        const nativeCss = `
+            body { margin:0; background:#080b10; color:#d1d5db; font:16px/1.5 sans-serif; }
+            .actionSheet { position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:35em;max-width:90vw;max-height:90vh;display:flex;padding:0; }
+            .actionSheetContent { margin:0!important;padding:.4em 0!important;flex-direction:column;display:flex;flex-grow:1;overflow:hidden; }
+            .actionSheetContent-centered { text-align:center;align-items:center; }
+            .actionSheetScroller { display:flex;flex-direction:column;width:100%;overflow-y:auto;min-height:0; }
+            .actionSheetTitle { margin:.6em 0 .7em!important;padding:0 .75rem;flex-grow:0; }
+            .actionSheetText { margin-top:0;padding:0 .75rem;flex-grow:0; }
+            .actionSheetMenuItem { flex-shrink:0;margin:0;display:flex; }
+            .btnCloseActionSheet { position:fixed;top:.75em;left:.5em; }
+            button { color:inherit;background:#292933;border:0;padding:.75em;font:inherit; }
+            .actionSheetItemText { white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+        `;
+        const modes = [
+            {name:'desktop', root:'class="layout-desktop"', sheets},
+            {name:'mobile', root:'class="layout-mobile"', sheets},
+            {name:'TV minimal', root:'class="layout-tv" data-eftv', sheets:[read('src/Jellyfin.Plugin.ElegantFinTv/Web/tv.css')]},
+            {name:'TV full', root:'class="layout-tv" data-eftv', sheets:[read('src/Jellyfin.Plugin.ElegantFinTv/Web/tv-full.css')]}
+        ];
+        for (const mode of modes) for (const width of [390,692]) for (const title of ['Watch Together','Ausgeblendete Medien']) {
+            await page.setViewportSize({width,height:400});
+            await page.setContent(`<html dir="ltr" ${mode.root}><body><div class="dialog actionSheet actionsheet-not-fullscreen" role="dialog"><button is="paper-icon-button-light" class="btnCloseActionSheet tv-back">Back</button><div class="actionSheetContent actionSheetContent-centered"><h1 class="actionSheetTitle">${title}</h1><p class="actionSheetText">${title === 'Watch Together' ? 'Profil auswählen. Beide Profile müssen die Funktion aktiviert haben.' : 'Serie oder Film wieder auf der Startseite zulassen.'}</p><div class="actionSheetScroller scrollY"><button class="listItem listItem-button actionSheetMenuItem"><div class="listItemBody actionsheetListItemBody"><div class="actionSheetItemText">Admin / Naruto</div></div></button><button class="listItem listItem-button actionSheetMenuItem"><div class="listItemBody actionsheetListItemBody"><div class="actionSheetItemText">Dr. House</div></div></button><div class="buttons"><button is="emby-button" type="button" class="btnCloseActionSheet">Abbrechen</button></div></div></div></div></body></html>`);
+            await page.addStyleTag({content:nativeCss});
+            for (const content of mode.sheets) await page.addStyleTag({content});
+            // Small viewports can scroll the native list; focusing cancel must reveal it.
+            await page.locator('.buttons .btnCloseActionSheet').focus();
+            const geometry = await page.evaluate(() => {
+                const rect = selector => document.querySelector(selector).getBoundingClientRect();
+                const cancel = rect('.buttons .btnCloseActionSheet');
+                const item = document.querySelectorAll('.actionSheetMenuItem')[1].getBoundingClientRect();
+                const dialog = rect('.actionSheet');
+                return {cancelTop:cancel.top,cancelBottom:cancel.bottom,itemBottom:item.bottom,
+                    titleBottom:rect('.actionSheetTitle').bottom,textBottom:rect('.actionSheetText').bottom,
+                    dialogBottom:dialog.bottom,dialogLeft:dialog.left,dialogRight:dialog.right,
+                    cancelPosition:getComputedStyle(document.querySelector('.buttons .btnCloseActionSheet')).position,
+                    backPosition:getComputedStyle(document.querySelector('.tv-back')).position};
+            });
+            const detail = JSON.stringify({mode:mode.name,width,title,...geometry});
+            assert.equal(geometry.cancelPosition,'static',detail);
+            assert.equal(geometry.backPosition,'fixed',detail);
+            assert.ok(geometry.cancelTop >= Math.max(geometry.titleBottom,geometry.textBottom,geometry.itemBottom),detail);
+            assert.ok(geometry.cancelBottom <= geometry.dialogBottom + 1,detail);
+            assert.ok(geometry.dialogLeft >= 0 && geometry.dialogRight <= width,detail);
+            await page.evaluate(() => document.querySelector('.buttons .btnCloseActionSheet').addEventListener('click',() => document.querySelector('.actionSheet').remove()));
+            await page.locator('.buttons .btnCloseActionSheet').focus();
+            await page.keyboard.press('Enter');
+            assert.equal(await page.locator('.actionSheet').count(),0);
+        }
     } finally { await browser.close(); }
 });

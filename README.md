@@ -1,5 +1,28 @@
 # ElegantFin TV für Jellyfin 12.2
 
+## Update 0.1.16: Auswahldialoge und Profilansichten
+
+- „Abbrechen“ steht in nativen Auswahldialogen unter der Liste. Der Button
+  überdeckt keine Titel oder Beschreibungen mehr, etwa bei Watch Together und
+  ausgeblendeten Medien. Der separate TV-Zurück-Pfeil behält seine Position.
+- „Passwort zurücksetzen“ wird auf der persönlichen Profilseite auch dann
+  ausgeblendet, wenn nur die persönlichen Seitenklassen vorhanden sind.
+  „Passwort speichern“ und die Reset-Aktion im Adminbereich bleiben verfügbar.
+
+Für Browser den bisherigen Zusatzimport ersetzen und vor normale CSS-Regeln setzen:
+
+```css
+@import url("https://cdn.jsdelivr.net/gh/S3NTIN3LOne/jellyfin-elegantfin-tv@v0.1.16/desktop/jellyplus-support.css");
+```
+
+Danach vollständig neu laden. Für TV das Plugin aktualisieren und Server sowie
+App neu starten. Jelly+ 0.1.5.0 kann weiterverwendet werden; dieses Release
+benötigt keine neue Script-Version.
+
+Geprüft: 45 Browser-Tests einschließlich Dialoggeometrie, Tastatur-Abbruch und
+Profilvarianten sowie Serverchecks und Release-Build. Der Test auf einem echten
+LG-TV steht weiterhin aus.
+
 ## Update 0.1.15: Begrenzte Saisoneffekte und Profilkorrekturen
 
 - Browser-Saisoneffekte enden an der Unterkante von Media Bar/„Meine Medien“.
@@ -61,7 +84,7 @@ Nach dem Plugin-Update Server und TV-App neu starten.
 
 Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Übernimmt die Gestaltung aus den drei bereitgestellten CSS-Dateien, aktiviert sie auf TVs und ergänzt Fokusbedienung für eine vorhandene Media Bar.
 
-**Status: Version 0.1.15.0 begrenzt Saisoneffekte und korrigiert Profilaktionen und Bibliotheksreihenfolge.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.15). Media Bar bleibt auf **3.0.0.4**.
+**Status: Version 0.1.16.0 korrigiert native Auswahldialoge und weitere persönliche Profilansichten.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.16). Media Bar bleibt auf **3.0.0.4**.
 
 ## Update 0.1.12.0: Persönlicher Theme-Schalter
 
