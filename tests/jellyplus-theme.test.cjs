@@ -10,6 +10,59 @@ const launch = () => chromium.launch({headless:true, ...(fs.existsSync(edge) ? {
 const pluginPath = path.join(__dirname, '../../../jellyfin_jellyplus/src/Jellyplus/Web/client.js');
 const pluginStyle = '.jp-posters{display:flex;gap:1em;overflow-x:auto;padding:.5em .3em 1.5em}.jp-poster{flex:0 0 10em;color:inherit;text-decoration:none}.jp-poster img{width:100%;height:15em;object-fit:cover;border-radius:.4em}.jp-poster span{display:block;margin-top:.5em}';
 
+test('mobile hides Media Bar and legacy effects without reserving header space', async () => {
+    const browser = await launch();
+    try {
+        const page = await browser.newPage({viewport:{width:390,height:844}});
+        await page.route('https://**',route=>route.abort());
+        for (const v3 of [false,true]) {
+            await page.setContent(`<html class="layout-mobile"><body class="media-bar-mobile-16-9"><div class="MuiAppBar-root"></div><div id="slides-container"><div class="${v3 ? 'slide-content' : 'slide'}">Media Bar</div></div><div class="homePage"><div class="homeSectionsContainer">My Media</div></div><div class="ef-seasonal" style="display:block">Old particles</div></body></html>`);
+            for (const content of sheets) await page.addStyleTag({content});
+            // A plugin can add high-specificity, important offsets after the theme.
+            await page.addStyleTag({content:'#slides-container{display:block;height:65vh} :root:has(#slides-container) .homePage .homeSectionsContainer{position:relative!important;top:70vh!important;margin-top:65vh!important;padding-top:2rem!important}'});
+            assert.equal(await page.locator('#slides-container').isVisible(),false);
+            assert.equal(await page.locator('.ef-seasonal').isVisible(),false);
+            assert.deepEqual(await page.locator('.homeSectionsContainer').evaluate(el=>{
+                const style=getComputedStyle(el);
+                return {position:style.position,top:style.top,margin:style.marginTop,padding:style.paddingTop};
+            }),{position:'static',top:'auto',margin:'0px',padding:'0px'});
+            await page.evaluate(()=>{document.documentElement.className='layout-desktop';});
+            assert.equal(await page.locator('#slides-container').isVisible(),true,'desktop remains supported');
+            assert.notEqual(await page.locator('.homeSectionsContainer').evaluate(el=>getComputedStyle(el).position),'static');
+        }
+    } finally { await browser.close(); }
+});
+
+test('profile image actions have no sticky shadow and stay below the name', async () => {
+    const browser = await launch();
+    try {
+        const page = await browser.newPage();
+        await page.route('https://**',route=>route.abort());
+        for (const width of [390,1280]) {
+            await page.setViewportSize({width,height:844});
+            await page.setContent(`<html class="${width<600 ? 'layout-mobile' : 'layout-desktop'}"><body><div id="userProfilePage" class="userPreferencesPage userPasswordPage"><div class="readOnlyContent" style="display:flex;flex-direction:row;align-items:center;margin:0 auto 1.8em;padding:0 1em"><div class="imagePlaceHolder" style="position:relative;display:inline-block;max-width:200px"><div id="image" style="width:200px;height:200px"></div></div><div style="display:flex;flex-direction:column;align-items:center;margin:1em 2em"><h2 class="username" style="margin:0">My Profile</h2><br><button type="button" id="btnAddImage" class="raised button-submit">Bild hinzufügen</button><button type="button" id="btnDeleteImage" class="raised hide">Bild löschen</button></div></div></div></body></html>`);
+            await page.addStyleTag({content:'.hide{display:none!important}'});
+            for (const content of sheets) await page.addStyleTag({content});
+            await page.waitForTimeout(200);
+            const style = await page.locator('#btnAddImage').evaluate(el=>{
+                const computed=getComputedStyle(el);
+                return {position:computed.position,shadow:computed.boxShadow,zIndex:computed.zIndex,
+                    top:el.getBoundingClientRect().top,nameBottom:document.querySelector('.username').getBoundingClientRect().bottom};
+            });
+            assert.equal(style.position,'static');
+            assert.equal(style.shadow,'none');
+            assert.equal(style.zIndex,'auto');
+            assert.ok(style.top>=style.nameBottom);
+            assert.equal(await page.locator('#btnDeleteImage').isVisible(),false);
+            await page.evaluate(()=>{
+                document.querySelector('#btnAddImage').addEventListener('click',()=>{window.clicked=true;});
+            });
+            await page.locator('#btnAddImage').click();
+            assert.equal(await page.evaluate(()=>window.clicked),true);
+        }
+    } finally { await browser.close(); }
+});
+
 test('Jelly+ poster dimensions follow regular theme cards at desktop and mobile sizes', async () => {
     const browser = await launch();
     try {

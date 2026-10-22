@@ -13,7 +13,7 @@
     mask-image: linear-gradient(#0009, #0006 55%, transparent);
 }
 
-:root:is(.layout-desktop, .layout-mobile):not(.layout-tv):not([data-eftv]) .ef-seasonal {
+:root.layout-desktop:not(.layout-mobile):not(.layout-tv):not([data-eftv]) .ef-seasonal {
     display: block;
 }
 

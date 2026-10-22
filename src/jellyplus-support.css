@@ -113,6 +113,29 @@
     display: none !important;
 }
 
+/* Image actions are ordinary profile buttons, not the sticky form submit. */
+:root[data-eftv] :is(#userProfilePage, .userPreferencesPage, .userPasswordPage) :is(#btnAddImage, #btnDeleteImage) {
+    position: static !important;
+    bottom: auto;
+    box-shadow: none !important;
+    z-index: auto !important;
+}
+
+/* Important rules in a layer override the Media Bar's unlayered important
+ * offsets, even when its stylesheet is inserted after the theme. */
+@layer ef-mobile-policy {
+    :root[data-eftv].layout-mobile:not(.layout-tv) :is(#slides-container, .ef-seasonal) {
+        display: none !important;
+    }
+
+    :root[data-eftv].layout-mobile:not(.layout-tv) .homeSectionsContainer {
+        position: static !important;
+        top: auto !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+}
+
 /* Jelly+ uses native action sheets. Their textual cancel button shares a class
  * with the TV back icon, but belongs at the end of the scroller, not at top left.
  * Scope to the footer so the separate TV back icon keeps its native position. */

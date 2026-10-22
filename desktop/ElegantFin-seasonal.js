@@ -4,14 +4,16 @@
     window.ElegantFinSeasonal?.destroy();
 
     const root = document.documentElement;
-    // A normal script include also loads its companion stylesheet.
+    // Desktop effects load their companion stylesheet only when activated.
     const source = document.currentScript?.src;
-    if (source && !document.querySelector('link[data-ef-seasonal-css]')) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = new URL('ElegantFin-seasonal.css', source).href;
-        link.dataset.efSeasonalCss = '';
-        document.head.append(link);
+    function ensureStyles() {
+        if (source && !document.querySelector('link[data-ef-seasonal-css]')) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = new URL('ElegantFin-seasonal.css', source).href;
+            link.dataset.efSeasonalCss = '';
+            document.head.append(link);
+        }
     }
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let overlay, currentKey = '', item = null, pending = false, generation = 0;
@@ -67,13 +69,14 @@
 
     function render(season) {
         if (!season) return clear();
+        ensureStyles();
         if (overlay?.dataset.season === season) return updateBounds();
         clear();
         overlay = document.createElement('div');
         overlay.className = 'ef-seasonal';
         overlay.dataset.season = season;
         overlay.setAttribute('aria-hidden', 'true');
-        const count = root.classList.contains('layout-mobile') ? 14 : 26;
+        const count = 26;
         for (let i = 0; i < count; i++) {
             const particle = document.createElement('span');
             particle.className = 'ef-seasonal-particle';
@@ -125,8 +128,8 @@
             .some(element => !element.closest('#slides-container') && visible(element));
         const dialog = [...document.querySelectorAll('.jp-overlay, dialog[open], [role="dialog"]')].some(visible);
         if (!season || (!home && (!user || !id || !page)) || playing || dialog || document.hidden || motion.matches ||
-            root.classList.contains('layout-tv') || root.hasAttribute('data-eftv') ||
-            !root.matches('.layout-desktop, .layout-mobile')) {
+            root.matches('.layout-mobile, .layout-tv, [data-eftv]') ||
+            !root.matches('.layout-desktop')) {
             clear();
             return;
         }

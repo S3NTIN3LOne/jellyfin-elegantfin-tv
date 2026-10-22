@@ -6,6 +6,45 @@ const { chromium } = require('playwright');
 const script = fs.readFileSync(path.join(__dirname, '../desktop/ElegantFin-seasonal.js'), 'utf8');
 const css = fs.readFileSync(path.join(__dirname, '../desktop/ElegantFin-seasonal.css'), 'utf8');
 
+test('mobile creates no effects, fetches no effect CSS or item metadata, and layout switching is reversible', async () => {
+    const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
+    const browser = await chromium.launch({headless:true, ...(fs.existsSync(edge) ? {executablePath:edge} : {})});
+    try {
+        const page = await browser.newPage({viewport:{width:390,height:844}});
+        await page.clock.install({time:new Date(2026,9,20,12)});
+        const cssRequests = [];
+        await page.route('https://theme.test/**', route => {
+            const isCss = route.request().url().endsWith('.css');
+            if (isCss) cssRequests.push(route.request().url());
+            return route.fulfill({contentType:isCss ? 'text/css' : 'text/javascript',body:isCss ? css : script});
+        });
+        await page.setContent('<html class="layout-mobile"><body><div id="itemDetailPage">Movie</div></body></html>');
+        await page.evaluate(() => {
+            location.hash = '/details?id=horror';
+            window.calls = 0;
+            window.ApiClient = {getCurrentUserId:()=>'user', getItem:async()=> { window.calls++; return {Type:'Movie', Genres:['Horror']}; }};
+        });
+        await page.addScriptTag({url:'https://theme.test/ElegantFin-seasonal.js'});
+        await page.clock.runFor(1000);
+        assert.equal(await page.locator('.ef-seasonal').count(),0);
+        assert.equal(await page.evaluate(()=>window.calls),0);
+        assert.equal(cssRequests.length,0);
+        await page.evaluate(() => { location.hash = '/home'; });
+        await page.clock.runFor(1000);
+        assert.equal(await page.locator('.ef-seasonal').count(),0);
+        assert.equal(cssRequests.length,0);
+        await page.evaluate(() => { document.documentElement.className = 'layout-desktop'; });
+        await page.clock.runFor(1000);
+        await page.waitForSelector('.ef-seasonal', {state:'visible'});
+        assert.equal(cssRequests.length,1);
+        await page.evaluate(() => { document.documentElement.className = 'layout-mobile'; });
+        assert.equal(await page.locator('.ef-seasonal').isVisible(),false,'CSS immediately hides existing particles before the next tick');
+        await page.clock.runFor(1000);
+        assert.equal(await page.locator('.ef-seasonal').count(),0);
+        await page.evaluate(() => window.ElegantFinSeasonal.destroy());
+    } finally { await browser.close(); }
+});
+
 test('home particles end below Media Bar and My Media and follow scroll, resize and replacement', async () => {
     const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
     const browser = await chromium.launch({headless:true, ...(fs.existsSync(edge) ? {executablePath:edge} : {})});

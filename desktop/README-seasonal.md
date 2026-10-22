@@ -1,6 +1,6 @@
 # Saisonale Effekte für das normale ElegantFin-Theme
 
-Die Erweiterung zeigt auf der Startseite und passenden Filmdetailseiten dezente Schneeflocken bzw. fallende
+Die Erweiterung zeigt im Desktop-Layout auf der Startseite und passenden Filmdetailseiten dezente Schneeflocken bzw. fallende
 Herbstblätter und Kürbisse. Die Grenzen gelten einschließlich des letzten Tages,
 jedes Jahr nach der lokalen Zeit des Browsers:
 
@@ -43,12 +43,13 @@ Falls ein Webclient diese Schnittstellen nicht bereitstellt, bleiben die Effekte
 auf Detailseiten aus. Auf der Startseite ist kein API-Zugriff erforderlich.
 Es werden keine Zugangsdaten gespeichert und keine externen Dienste angesprochen.
 
-Die TV-Plugin-Dateien werden nicht verwendet oder verändert. TV-Layout,
+Die Saison-Erweiterung ist auf das Desktop-Layout begrenzt. Smartphone-/Mobil-Layout, TV-Layout,
 Videowiedergabe, ausgeblendete Tabs und die Systemeinstellung „Bewegung reduzieren“
 deaktivieren die Effekte. Die Partikel blockieren keine Klicks. Navigation und
 Datumswechsel werden spätestens nach einer Sekunde geprüft; Film-Metadaten werden
 einmal pro Detailansicht geladen, fehlgeschlagene Abrufe frühestens nach 30 Sekunden
-wiederholt. Auf Mobilgeräten werden weniger Partikel erzeugt.
+wiederholt. Im Mobil-Layout werden keine Partikel erzeugt, keine Film-Metadaten
+für Effekte angefordert und kein Saison-CSS durch das Script geladen.
 
 Zum Abschalten die beiden Ergänzungen entfernen; für die laufende Sitzung ist
 auch `window.ElegantFinSeasonal.destroy()` in der Browserkonsole möglich.
@@ -83,6 +84,18 @@ aus. „Passwort speichern“ bleibt sichtbar und liegt ohne überdeckenden Scha
 im normalen Formularfluss. Der Adminbereich behält seine Reset-Aktion. Die
 Bibliotheken unter „Meine Medien“ folgen Jellyfins gespeicherter DOM-Reihenfolge;
 die Ergänzung setzt keine eigene alphabetische oder typbasierte Sortierung.
+
+Im Smartphone-/Mobil-Layout blendet das Zusatz-CSS die Media Bar und auch Partikel
+älterer Scripts aus. Die für die Media Bar reservierten Abstände der
+Startseitenreihen entfallen, selbst wenn das Plugin sein CSS später lädt.
+Desktop und das explizite TV-Layout behalten ihre Media-Bar-Darstellung.
+Dies ist eine Theme-Regel; die serverweiten Media-Bar-Einstellungen werden nicht
+geändert.
+
+Die Bildaktionen auf der persönlichen Profilseite erhalten weder die feste
+Position noch den großen Schatten des Speichern-Buttons. Dadurch bleibt der
+Profilname oberhalb von „Bild hinzufügen“ sichtbar. Die native Sichtbarkeit und
+Bedienung von Bild hinzufügen/löschen bleiben erhalten.
 
 Die Profilregel berücksichtigt neben `#userProfilePage` auch die persönlichen
 Seitenklassen `.userPreferencesPage` und `.userPasswordPage`. Bei Jellyfins

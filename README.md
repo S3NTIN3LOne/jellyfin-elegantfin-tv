@@ -1,5 +1,31 @@
 # ElegantFin TV für Jellyfin 12.2
 
+## Update 0.1.17: Mobil-Layout und Profilbildaktionen
+
+- Smartphone-/Mobil-Layout: keine Media Bar, kein reservierter Abstand und keine
+  Saisoneffekte. Das aktualisierte Saison-Script lädt dort auch kein Effekt-CSS
+  und fragt keine Film-Metadaten ab. Desktop und explizites TV-Layout behalten
+  ihre Media-Bar-Darstellung.
+- Der Profilname bleibt über den Bildaktionen sichtbar. „Bild hinzufügen“ und
+  „Bild löschen“ übernehmen nicht länger den großen Schatten bzw. die feste
+  Position eines Speichern-Buttons.
+
+Für Browser den bisherigen Zusatzimport ersetzen und vor normale CSS-Regeln setzen:
+
+```css
+@import url("https://cdn.jsdelivr.net/gh/S3NTIN3LOne/jellyfin-elegantfin-tv@v0.1.17/desktop/jellyplus-support.css");
+```
+
+Danach vollständig neu laden. Das CSS blendet auch Partikel älterer Scripts auf
+Smartphones aus. Das aktualisierte `ElegantFin-seasonal.js` ist separat unter
+demselben Versionspfad verfügbar. Bei eigener Script-Einbindung auch dessen URL
+aktualisieren. Jelly+ 0.1.5.0 lädt weiterhin die fest eingetragene Script-Version
+0.1.15; deren mobile Darstellung wird durch das neue CSS ebenfalls unterdrückt.
+
+Für TV das Plugin aktualisieren und Server sowie App neu starten. Geprüft:
+48 Browser-Tests, Serverchecks und Release-Build. Ein Test auf einem echten LG-TV
+steht weiterhin aus.
+
 ## Update 0.1.16: Auswahldialoge und Profilansichten
 
 - „Abbrechen“ steht in nativen Auswahldialogen unter der Liste. Der Button
@@ -84,7 +110,7 @@ Nach dem Plugin-Update Server und TV-App neu starten.
 
 Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Übernimmt die Gestaltung aus den drei bereitgestellten CSS-Dateien, aktiviert sie auf TVs und ergänzt Fokusbedienung für eine vorhandene Media Bar.
 
-**Status: Version 0.1.16.0 korrigiert native Auswahldialoge und weitere persönliche Profilansichten.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.16). Media Bar bleibt auf **3.0.0.4**.
+**Status: Version 0.1.17.0 deaktiviert Media Bar/Saisoneffekte im Mobil-Layout und korrigiert die Profilbildaktionen.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.17). Media Bar bleibt auf **3.0.0.4**.
 
 ## Update 0.1.12.0: Persönlicher Theme-Schalter
 
