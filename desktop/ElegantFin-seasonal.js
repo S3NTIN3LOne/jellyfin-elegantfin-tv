@@ -16,6 +16,8 @@
         }
     }
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // Jellyfin can use layout-desktop on phones too (manual layout selection).
+    const mobileScreen = window.matchMedia('(max-width: 767px), (pointer: coarse) and (max-width: 1024px)');
     let overlay, currentKey = '', item = null, pending = false, generation = 0;
     let retryAfter = 0, stopped = false;
     let boundsFrame = 0;
@@ -127,7 +129,7 @@
         const playing = [...document.querySelectorAll('video, .videoPlayerContainer, .videoPlayerContainer-onTop')]
             .some(element => !element.closest('#slides-container') && visible(element));
         const dialog = [...document.querySelectorAll('.jp-overlay, dialog[open], [role="dialog"]')].some(visible);
-        if (!season || (!home && (!user || !id || !page)) || playing || dialog || document.hidden || motion.matches ||
+        if (!season || (!home && (!user || !id || !page)) || playing || dialog || document.hidden || motion.matches || mobileScreen.matches ||
             root.matches('.layout-mobile, .layout-tv, [data-eftv]') ||
             !root.matches('.layout-desktop')) {
             clear();
@@ -163,6 +165,7 @@
     document.addEventListener('scroll', scheduleBounds, true);
     window.addEventListener('resize', scheduleBounds);
     motion.addEventListener('change', update);
+    mobileScreen.addEventListener('change', update);
     window.ElegantFinSeasonal = {
         seasonFor,
         destroy() {
@@ -173,6 +176,7 @@
             window.removeEventListener('popstate', update);
             document.removeEventListener('visibilitychange', update);
             motion.removeEventListener('change', update);
+            mobileScreen.removeEventListener('change', update);
             document.removeEventListener('scroll', scheduleBounds, true);
             window.removeEventListener('resize', scheduleBounds);
             cancelAnimationFrame(boundsFrame);

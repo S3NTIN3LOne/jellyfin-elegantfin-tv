@@ -16,7 +16,8 @@ test('mobile hides Media Bar and legacy effects without reserving header space',
         const page = await browser.newPage({viewport:{width:390,height:844}});
         await page.route('https://**',route=>route.abort());
         for (const v3 of [false,true]) {
-            await page.setContent(`<html class="layout-mobile"><body class="media-bar-mobile-16-9"><div class="MuiAppBar-root"></div><div id="slides-container"><div class="${v3 ? 'slide-content' : 'slide'}">Media Bar</div></div><div class="homePage"><div class="homeSectionsContainer">My Media</div></div><div class="ef-seasonal" style="display:block">Old particles</div></body></html>`);
+            await page.setViewportSize({width:390,height:844});
+            await page.setContent(`<html class="layout-desktop"><body class="media-bar-mobile-16-9"><div class="MuiAppBar-root"></div><div id="slides-container"><div class="${v3 ? 'slide-content' : 'slide'}">Media Bar</div></div><div class="homePage"><div class="homeSectionsContainer">My Media</div></div><div class="ef-seasonal" style="display:block">Old particles</div></body></html>`);
             for (const content of sheets) await page.addStyleTag({content});
             // A plugin can add high-specificity, important offsets after the theme.
             await page.addStyleTag({content:'#slides-container{display:block;height:65vh} :root:has(#slides-container) .homePage .homeSectionsContainer{position:relative!important;top:70vh!important;margin-top:65vh!important;padding-top:2rem!important}'});
@@ -26,6 +27,7 @@ test('mobile hides Media Bar and legacy effects without reserving header space',
                 const style=getComputedStyle(el);
                 return {position:style.position,top:style.top,margin:style.marginTop,padding:style.paddingTop};
             }),{position:'static',top:'auto',margin:'0px',padding:'0px'});
+            await page.setViewportSize({width:1280,height:844});
             await page.evaluate(()=>{document.documentElement.className='layout-desktop';});
             assert.equal(await page.locator('#slides-container').isVisible(),true,'desktop remains supported');
             assert.notEqual(await page.locator('.homeSectionsContainer').evaluate(el=>getComputedStyle(el).position),'static');
@@ -224,4 +226,29 @@ test('native selection-sheet cancellation follows choices without covering title
             assert.equal(await page.locator('.actionSheet').count(),0);
         }
     } finally { await browser.close(); }
+});
+
+
+test('home Live TV preserves complete artwork in poster cards after refresh in browser and both TV profiles', async () => {
+    const browser = await launch();
+    try {
+        for (const mode of ['desktop','tv','tv-full']) {
+            const page = await browser.newPage({viewport:{width:1920,height:1080}});
+            await page.route('https://**',r=>r.abort());
+            await page.setContent(`<html class="layout-${mode==='desktop'?'desktop':'tv'}" ${mode==='desktop'?'':'data-eftv'}><body><div class="homeSectionsContainer"><div class="itemsContainer"></div></div></body></html>`);
+            await page.addStyleTag({content:'.card{display:inline-block;width:200px}.cardPadder{height:0}.cardPadder-portrait{padding-bottom:150%}.cardPadder-backdrop{padding-bottom:56.25%}'});
+            for (const content of mode==='desktop'?sheets:[read('src/Jellyfin.Plugin.ElegantFinTv/Web/'+mode+'.css')]) await page.addStyleTag({content});
+            for (const shape of ['backdrop','portrait','backdrop']) {
+                await page.locator('.itemsContainer').evaluate((el,shape)=>{el.innerHTML=`<div class="card overflow${shape==='portrait'?'Portrait':'Backdrop'}Card" data-type="Program"><div class="cardScalable"><div class="cardPadder cardPadder-${shape}"></div><div class="cardImageContainer" style="background-size:cover"><img style="object-fit:cover"></div></div></div><div class="card overflowPortraitCard" data-type="Movie"><div class="cardScalable"><div class="cardPadder cardPadder-portrait"></div></div></div>`;},shape);
+                const size=await page.locator('[data-type="Program"] .cardPadder').evaluate(el=>{const r=el.getBoundingClientRect();return {w:r.width,h:r.height};});
+                assert.ok(size.w>150,JSON.stringify({mode,shape,size}));
+                assert.ok(Math.abs(size.w/size.h-2/3)<.02,JSON.stringify({mode,shape,size}));
+                assert.equal(await page.locator('[data-type="Program"] .cardImageContainer').evaluate(el=>getComputedStyle(el).backgroundSize),'contain');
+                assert.equal(await page.locator('[data-type="Program"] img').evaluate(el=>getComputedStyle(el).objectFit),'contain');
+                const movie=await page.locator('[data-type="Movie"] .cardPadder').evaluate(el=>{const r=el.getBoundingClientRect();return r.height/r.width;});
+                assert.ok(movie>1.4,'movie remains portrait');
+            }
+            await page.close();
+        }
+    } finally {await browser.close();}
 });

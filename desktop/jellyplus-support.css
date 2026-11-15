@@ -262,3 +262,41 @@
 
     }
 }
+
+/* Phones can retain layout-desktop; also covers legacy Jelly+ particles. */
+@layer ef-mobile-policy {
+    @media (max-width: 767px), (pointer: coarse) and (max-width: 1024px) {
+        :root:not(.layout-tv):not([data-eftv]) :is(#slides-container, .ef-seasonal) {
+            display: none !important;
+        }
+        :root:not(.layout-tv):not([data-eftv]) .ef-seasonal-particle {
+            animation: none !important;
+        }
+        :root:not(.layout-tv):not([data-eftv]) .homeSectionsContainer {
+            position: static !important;
+            top: auto !important;
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+    }
+}
+
+/* Live programs may switch to portrait classes when EPG artwork refreshes.
+ * Keep home-page programs in poster format and preserve the complete artwork. */
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .homeSectionsContainer .card[data-type="Program"] {
+    width: clamp(10rem, 14vw, 18rem) !important;
+    flex: 0 0 clamp(10rem, 14vw, 18rem) !important;
+}
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .homeSectionsContainer .card[data-type="Program"] .cardPadder {
+    padding-bottom: 150% !important;
+    aspect-ratio: auto !important;
+}
+
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .homeSectionsContainer .card[data-type="Program"] .cardImageContainer {
+    background-size: contain !important;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+:root:is([data-eftv], .layout-desktop:not(.layout-tv), .layout-mobile:not(.layout-tv)) .homeSectionsContainer .card[data-type="Program"] img {
+    object-fit: contain !important;
+}

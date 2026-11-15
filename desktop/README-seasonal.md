@@ -136,3 +136,9 @@ Die Browser-Tests verwenden die bereits vorhandene Playwright-Installation unter
 Die Tests simulieren Jellyfin-Metadaten und Detailseiten. Eine Prüfung an einem
 laufenden Jellyfin-Server ist zusätzlich sinnvoll, insbesondere bei anderen
 Webclient-Versionen.
+
+Die mobile Sperre greift auch bei manuell gew?hltem Desktop-Layout: bis 767 px
+Viewport-Breite sowie bei prim?rer Touch-Bedienung bis 1024 px (z. B. Querformat).
+Das gilt f?r Media Bar und Partikel; das explizite TV-Layout bleibt ausgenommen.
+Das aktuelle Effektskript erzeugt dort keine Partikel und l?dt keine Effekt-CSS
+oder Filmdaten. Das Zusatz-CSS unterdr?ckt auch Partikel ?lterer Jelly+-Skripte.

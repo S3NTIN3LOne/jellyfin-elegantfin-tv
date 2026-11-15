@@ -1,5 +1,9 @@
 # ElegantFin TV für Jellyfin 12.2
 
+## Update 0.1.18: Live-TV-Poster ohne Beschnitt
+
+Live-TV-Karten auf der Startseite behalten das Posterformat auch nach EPG-Aktualisierungen. Bilder werden vollst?ndig eingepasst; abweichende Formate k?nnen freie R?nder zeigen. Gilt f?r Browser und beide TV-Profile. Die mobile Sperre ber?cksichtigt zus?tzlich Smartphone-Bildschirmgr??en im Desktop-Layout. Die Media-Bar-Girlanden-Datumspr?fung ist nicht Bestandteil dieses Updates.
+
 ## Update 0.1.17: Mobil-Layout und Profilbildaktionen
 
 - Smartphone-/Mobil-Layout: keine Media Bar, kein reservierter Abstand und keine
@@ -13,7 +17,7 @@
 Für Browser den bisherigen Zusatzimport ersetzen und vor normale CSS-Regeln setzen:
 
 ```css
-@import url("https://cdn.jsdelivr.net/gh/S3NTIN3LOne/jellyfin-elegantfin-tv@v0.1.17/desktop/jellyplus-support.css");
+@import url("https://cdn.jsdelivr.net/gh/S3NTIN3LOne/jellyfin-elegantfin-tv@v0.1.18/desktop/jellyplus-support.css");
 ```
 
 Danach vollständig neu laden. Das CSS blendet auch Partikel älterer Scripts auf
@@ -110,7 +114,7 @@ Nach dem Plugin-Update Server und TV-App neu starten.
 
 Eigenständiges Pluginprojekt für die offizielle Jellyfin-App auf LG webOS. Übernimmt die Gestaltung aus den drei bereitgestellten CSS-Dateien, aktiviert sie auf TVs und ergänzt Fokusbedienung für eine vorhandene Media Bar.
 
-**Status: Version 0.1.17.0 deaktiviert Media Bar/Saisoneffekte im Mobil-Layout und korrigiert die Profilbildaktionen.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.17). Media Bar bleibt auf **3.0.0.4**.
+**Status: Version 0.1.18.0 stabilisiert Live-TV-Poster und verhindert Bildbeschnitt.** Installation über den bestehenden Plugin-Katalog oder das [GitHub-Release](https://github.com/S3NTIN3LOne/jellyfin-elegantfin-tv/releases/tag/v0.1.18). Media Bar bleibt auf **3.0.0.4**.
 
 ## Update 0.1.12.0: Persönlicher Theme-Schalter
 

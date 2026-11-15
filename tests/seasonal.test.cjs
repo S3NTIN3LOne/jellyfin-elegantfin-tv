@@ -18,7 +18,7 @@ test('mobile creates no effects, fetches no effect CSS or item metadata, and lay
             if (isCss) cssRequests.push(route.request().url());
             return route.fulfill({contentType:isCss ? 'text/css' : 'text/javascript',body:isCss ? css : script});
         });
-        await page.setContent('<html class="layout-mobile"><body><div id="itemDetailPage">Movie</div></body></html>');
+        await page.setContent('<html class="layout-desktop"><body><div id="itemDetailPage">Movie</div></body></html>');
         await page.evaluate(() => {
             location.hash = '/details?id=horror';
             window.calls = 0;
@@ -33,6 +33,7 @@ test('mobile creates no effects, fetches no effect CSS or item metadata, and lay
         await page.clock.runFor(1000);
         assert.equal(await page.locator('.ef-seasonal').count(),0);
         assert.equal(cssRequests.length,0);
+        await page.setViewportSize({width:1280,height:844});
         await page.evaluate(() => { document.documentElement.className = 'layout-desktop'; });
         await page.clock.runFor(1000);
         await page.waitForSelector('.ef-seasonal', {state:'visible'});
@@ -203,4 +204,63 @@ test('seasonal dates, metadata, navigation, accessibility and stale requests', a
     } finally {
         await browser.close();
     }
+});
+
+
+test('touch phones in landscape suppress both new and legacy particles with desktop layout', async () => {
+    const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
+    const browser = await chromium.launch({headless:true, ...(fs.existsSync(edge) ? {executablePath:edge} : {})});
+    try {
+        const page = await browser.newPage({viewport:{width:932,height:430},hasTouch:true});
+        await page.clock.install({time:new Date(2026,11,20,12)});
+        await page.setContent('<html class="layout-desktop"><body>Home</body></html>');
+        await page.evaluate(() => { location.hash = '/home'; });
+        await page.addStyleTag({content:css});
+        await page.addScriptTag({content:script});
+        await page.clock.runFor(1000);
+        assert.equal(await page.locator('.ef-seasonal').count(),0);
+        await page.evaluate(() => window.ElegantFinSeasonal.destroy());
+        await page.addStyleTag({content:fs.readFileSync(path.join(__dirname,'../desktop/jellyplus-support.css'),'utf8')});
+        await page.evaluate(() => document.body.insertAdjacentHTML('beforeend','<div class="ef-seasonal" style="display:block;height:200px"><span class="ef-seasonal-particle">Snow</span></div>'));
+        assert.equal(await page.locator('.ef-seasonal').isVisible(),false);
+        assert.equal(await page.locator('.ef-seasonal-particle').evaluate(el=>getComputedStyle(el).animationName),'none');
+    } finally { await browser.close(); }
+});
+
+
+test('November 12 has no desktop particles in current, released and Jelly+ pinned scripts', async () => {
+    const {execFileSync} = require('node:child_process');
+    const versions = ['v0.1.15', 'v0.1.17'].map(tag => [tag, execFileSync('git', ['show', `${tag}:desktop/ElegantFin-seasonal.js`], {cwd:path.join(__dirname,'..'),encoding:'utf8'})]);
+    versions.push(['working',script]);
+    const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
+    const browser = await chromium.launch({headless:true, ...(fs.existsSync(edge) ? {executablePath:edge} : {})});
+    try {
+        for (const [version, source] of versions) {
+            const page = await browser.newPage({viewport:{width:1280,height:800}});
+            await page.clock.install({time:new Date(2026,10,12,12)});
+            await page.setContent('<html class="layout-desktop"><body><div id="itemDetailPage">Horror movie</div></body></html>');
+            await page.evaluate(() => {
+                location.hash='/home';
+                window.calls=0;
+                window.ApiClient={getCurrentUserId:()=> 'user',getItem:async()=>{window.calls++;return {Type:'Movie',Genres:['Horror','Christmas']};}};
+            });
+            await page.addScriptTag({content:source});
+            await page.clock.runFor(1000);
+            assert.equal(await page.locator('.ef-seasonal').count(),0,version+' home on Nov 12');
+            await page.evaluate(()=>{location.hash='/details?id=horror';});
+            await page.clock.runFor(1000);
+            assert.equal(await page.locator('.ef-seasonal').count(),0,version+' details on Nov 12');
+            assert.equal(await page.evaluate(()=>window.calls),0);
+            await page.evaluate(()=>{location.hash='/home';});
+            await page.clock.setSystemTime(new Date(2026,10,1,23,59,58));
+            await page.clock.runFor(1000);
+            assert.equal(await page.locator('.ef-seasonal').count(),1,version+' Halloween last day');
+            await page.clock.runFor(2000);
+            assert.equal(await page.locator('.ef-seasonal').count(),0,version+' midnight Nov 2');
+            await page.clock.setSystemTime(new Date(2026,10,12,12));
+            await page.clock.runFor(1000);
+            assert.equal(await page.locator('.ef-seasonal').count(),0,version+' open tab Nov 12');
+            await page.close();
+        }
+    } finally { await browser.close(); }
 });

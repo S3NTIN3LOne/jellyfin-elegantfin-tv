@@ -262,3 +262,23 @@
 
     }
 }
+
+/* Live programs may switch to portrait classes when EPG artwork refreshes.
+ * Keep home-page programs in poster format and preserve the complete artwork. */
+:root[data-eftv] .homeSectionsContainer .card[data-type="Program"] {
+    width: clamp(10rem, 14vw, 18rem) !important;
+    flex: 0 0 clamp(10rem, 14vw, 18rem) !important;
+}
+:root[data-eftv] .homeSectionsContainer .card[data-type="Program"] .cardPadder {
+    padding-bottom: 150% !important;
+    aspect-ratio: auto !important;
+}
+
+:root[data-eftv] .homeSectionsContainer .card[data-type="Program"] .cardImageContainer {
+    background-size: contain !important;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+:root[data-eftv] .homeSectionsContainer .card[data-type="Program"] img {
+    object-fit: contain !important;
+}

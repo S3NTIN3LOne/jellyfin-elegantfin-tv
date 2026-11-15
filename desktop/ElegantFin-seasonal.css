@@ -53,3 +53,9 @@
     .ef-seasonal { display: none !important; }
     .ef-seasonal-particle { animation: none !important; }
 }
+
+/* Suppress effects even when a phone uses Jellyfin desktop layout. */
+@media (max-width: 767px), (pointer: coarse) and (max-width: 1024px) {
+    .ef-seasonal { display: none !important; }
+    .ef-seasonal-particle { animation: none !important; }
+}
